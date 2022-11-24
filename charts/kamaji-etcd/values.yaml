@@ -93,6 +93,14 @@ backup:
     accessKey: minio
     # -- The S3 storage SECRET KEY credential
     secretKey: minio
+    # -- The S3 client image config section
+    image:
+      # -- Install image from specific repo 
+      repository: minio/mc
+      # -- Install image with specific tag
+      tag: "RELEASE.2022-11-07T23-47-39Z"
+      # -- Pull policy to use
+      pullPolicy: IfNotPresent
 
 # -- Labels to add to all etcd pods
 podLabels:
