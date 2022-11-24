@@ -20,7 +20,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Create the fully-qualified Docker image to use
+Create the etcd fully-qualified Docker image to use
 */}}
 {{- define "etcd.fullyQualifiedDockerImage" -}}
 {{- printf "%s:%s" .Values.image.repository ( .Values.image.tag | default (printf "v%s" .Chart.AppVersion) ) -}}
@@ -141,7 +141,6 @@ Space separated list of etcd cluster endpoints.
 {{- join " " $list -}}
 {{- end }}
 
-
 {{/*
 Space separated list of etcd cluster endpoints.
 */}}
@@ -150,4 +149,11 @@ Space separated list of etcd cluster endpoints.
 {{- range $i, $count := until (int $.Values.replicas) -}}
     {{ printf "- %s-%d.%s.%s.svc.cluster.local:%d\n" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) }}
 {{- end }}
+{{- end }}
+
+{{/*
+Create the minio-client fully-qualified Docker image to use
+*/}}
+{{- define "minio-client.fullyQualifiedDockerImage" -}}
+{{- printf "%s:%s" .Values.backup.s3.image.repository .Values.backup.s3.image.tag -}}
 {{- end }}
