@@ -34,7 +34,7 @@ spec:
                     POD=${ENDPOINT#*//}
                     POD=${POD%.{{ include "etcd.serviceName" . }}*}
                   fi
-                  SNAPSHOT={{ .Values.backup.snapshotName }}_${POD}_{{ .Values.backup.snapshotDateFormat }}.db
+                  SNAPSHOT={{ .Values.backup.snapshotNamePrefix }}_${POD}_{{ .Values.backup.snapshotDateFormat }}.db
                   etcdctl --endpoints=${ENDPOINT} snapshot save ${SNAPSHOT}
                   etcdutl --write-out=table snapshot status ${SNAPSHOT}
                   md5sum ${SNAPSHOT};
@@ -66,7 +66,7 @@ spec:
                 && $MC admin info myminio \
                 && $MC ping myminio -c 3 -e 3 ; then
                   echo -e "\nUploading snapshot(s):"
-                  $MC cp {{ .Values.backup.snapshotName }}_*.db myminio/{{ .Values.backup.s3.bucket }}
+                  $MC cp {{ .Values.backup.snapshotNamePrefix }}_*.db myminio/{{ .Values.backup.s3.bucket }}
                 else
                   echo -e "\nERROR: S3 storage could not be configured;\nCheck your S3 URL/Credentials or network connectivity"
                   exit 1
