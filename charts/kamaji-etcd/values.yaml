@@ -79,8 +79,8 @@ backup:
   all: false
   # -- The job scheduled maintenance time for backup
   schedule: "20 3 * * *" # https://crontab.guru/
-  # -- The backup file name
-  snapshotName: mysnapshot
+  # -- The backup file name prefix
+  snapshotNamePrefix: mysnapshot
   # -- The backup file date format (bash)
   snapshotDateFormat: $(date +%Y%m%d)
   # -- The S3 storage config section
