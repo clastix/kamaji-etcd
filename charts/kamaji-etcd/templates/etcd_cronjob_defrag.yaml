@@ -18,7 +18,7 @@ spec:
           containers:
           - name: etcd-client
             image: {{ include "etcd.fullyQualifiedDockerImage" . }}
-            imagePullPolicy: IfNotPresent
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
             command:
               - bash
               - -c
