@@ -103,7 +103,7 @@ Name of the etcd role binding
 Name of the etcd root-client secret.
 */}}
 {{- define "etcd.clientSecretName" }}
-{{- printf "root-client-certs" }}
+{{- printf "%s-root-client-certs" ( include "etcd.fullname" . ) }}
 {{- end }}
 
 {{/*
