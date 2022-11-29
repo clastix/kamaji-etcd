@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.4](https://img.shields.io/badge/AppVersion-3.5.4-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.4](https://img.shields.io/badge/AppVersion-3.5.4-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
@@ -63,9 +63,7 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
-| caSecret | string | `"etcd-certs"` | Name of the secret which contains CA's certificate and private key. (default: "etcd-certs") |
 | clientPort | int | `2379` | The client request port. |
-| clientSecret | string | `"root-client-certs"` | Name of the secret which contains ETCD client certificates. (default: "root-client-certs") |
 | defragmentation | object | `{"schedule":"*/15 * * * *"}` | Enable storage defragmentation  |
 | defragmentation.schedule | string | `"*/15 * * * *"` | The job scheduled maintenance time for defrag (empty to disable) |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
@@ -80,7 +78,7 @@ Here the values you can override:
 | persistenVolumeClaim.size | string | `"10Gi"` | The size of persistent storage for etcd data  |
 | persistenVolumeClaim.storageClass | string | `""` | A specific storage class |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
-| podLabels | object | `{"application":"kamaji-etcd","foo":"bar"}` | Labels to add to all etcd pods |
+| podLabels | object | `{"application":"kamaji-etcd"}` | Labels to add to all etcd pods |
 | priorityClassName | string | `"system-cluster-critical"` | The priorityClassName to apply to etcd |
 | quotaBackendBytes | string | `"8589934592"` | Raise alarms when backend size exceeds the given quota. It will put the cluster into a maintenance mode which only accepts key reads and deletes.  |
 | replicas | int | `3` | Size of the etcd cluster |
