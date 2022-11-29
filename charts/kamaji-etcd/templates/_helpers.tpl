@@ -9,7 +9,7 @@ Expand the name of the chart.
 Create a default fully qualified etcd name.
 */}}
 {{- define "etcd.fullname" -}}
-{{- printf "etcd" }}
+{{- .Release.Name }}
 {{- end }}
 
 {{/*
@@ -65,6 +65,13 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Name of the Stateful Set.
+*/}}
+{{- define "etcd.stsName" }}
+{{- printf "%s" (include "etcd.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Name of the etcd CA secret.
 */}}
 {{- define "etcd.caSecretName" }}
@@ -114,9 +121,10 @@ Retrieve the current Kubernetes version to launch a kubectl container with the m
 Comma separated list of etcd cluster peers.
 */}}
 {{- define "etcd.initialCluster" }}
+{{- $outer := . -}}
 {{- $list := list -}}
 {{- range $i, $count := until (int $.Values.replicas) -}}
-    {{- $list = append $list ( printf "etcd-%d=https://%s-%d.%s.%s.svc.cluster.local:%d" $i "etcd" $count ( include "etcd.serviceName" . ) $.Release.Namespace (int $.Values.peerApiPort) ) -}}
+    {{- $list = append $list ( printf "%s-%d=https://%s-%d.%s.%s.svc.cluster.local:%d" ( include "etcd.stsName" $outer ) $i ( include "etcd.fullname" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.peerApiPort) ) -}}
 {{- end }}
 {{- join "," $list -}}
 {{- end }}
@@ -125,9 +133,10 @@ Comma separated list of etcd cluster peers.
 Space separated list of etcd cluster endpoints.
 */}}
 {{- define "etcd.endpoints" }}
+{{- $outer := . -}}
 {{- $list := list -}}
 {{- range $i, $count := until (int $.Values.replicas) -}}
-    {{- $list = append $list ( printf "https://%s-%d.%s.%s.svc.cluster.local:%d" "etcd" $count ( include "etcd.serviceName" . ) $.Release.Namespace (int $.Values.clientPort) ) -}}
+    {{- $list = append $list ( printf "https://%s-%d.%s.%s.svc.cluster.local:%d" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) ) -}}
 {{- end }}
 {{- join " " $list -}}
 {{- end }}

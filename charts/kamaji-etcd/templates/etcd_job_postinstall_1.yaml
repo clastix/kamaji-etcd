@@ -5,9 +5,9 @@ metadata:
     {{- include "etcd.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": "hook-succeeded,hook-failed"
-  name: "{{ .Release.Name }}-etcd-setup"
+  name: "{{ .Release.Name }}-etcd-setup-1"
   namespace: {{ .Release.Namespace }}
 spec:
   template:
@@ -33,6 +33,7 @@ spec:
               name: certs
             - mountPath: /csr
               name: csr
+      containers:
         - name: kubectl
           image: {{ printf "clastix/kubectl:%s" (include "etcd.jobsTagKubeVersion" .) }}
           command:
@@ -42,46 +43,15 @@ spec:
               kubectl --namespace={{ .Release.Namespace }} delete secret --ignore-not-found=true {{ include "etcd.caSecretName" . }} {{ include "etcd.clientSecretName" . }} &&
               kubectl --namespace={{ .Release.Namespace }} create secret generic {{ include "etcd.caSecretName" . }} --from-file=/certs/ca.crt --from-file=/certs/ca.key --from-file=/certs/peer-key.pem --from-file=/certs/peer.pem --from-file=/certs/server-key.pem --from-file=/certs/server.pem &&
               kubectl --namespace={{ .Release.Namespace }} create secret tls {{ include "etcd.clientSecretName" . }} --key=/certs/root-client-key.pem --cert=/certs/root-client.pem &&
-              kubectl --namespace={{ .Release.Namespace }} rollout status sts/etcd --timeout=300s
+              kubectl --namespace={{ .Release.Namespace }} rollout status sts/{{ include "etcd.stsName" . }} --timeout=300s
           volumeMounts:
             - mountPath: /certs
               name: certs
-      containers:
-        - command:
-          - bash
-          - -c
-          - |-
-            etcdctl member list -w table &&
-            etcdctl user add --no-password=true root &&
-            etcdctl role add root &&
-            etcdctl user grant-role root root &&
-            etcdctl auth enable
-          env:
-            - name: ETCDCTL_ENDPOINTS
-              value: https://etcd-0.{{ include "etcd.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.clientPort }}
-            - name: ETCDCTL_CACERT
-              value: /opt/certs/ca/ca.crt
-            - name: ETCDCTL_CERT
-              value: /opt/certs/root-certs/tls.crt
-            - name: ETCDCTL_KEY
-              value: /opt/certs/root-certs/tls.key
-          image: {{ include "etcd.fullyQualifiedDockerImage" . }}
-          imagePullPolicy: IfNotPresent
-          name: etcd-client
-          volumeMounts:
-            - name: root-certs
-              mountPath: /opt/certs/root-certs
-            - name: certs
-              mountPath: /opt/certs/ca
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
       volumes:
-        - name: root-certs
-          secret:
-            secretName: {{ include "etcd.clientSecretName" . }}
-            optional: true
         - name: csr
           configMap:
             name: {{ include "etcd.csrConfigMapName" . }}
