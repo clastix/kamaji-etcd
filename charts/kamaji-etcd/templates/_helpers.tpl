@@ -79,6 +79,20 @@ Name of the certificate signing requests for the certificates required by etcd.
 {{- end }}
 
 {{/*
+Name of the etcd role
+*/}}
+{{- define "etcd.roleName" }}
+{{- printf "%s-gen-certs-role" (include "etcd.fullname" .) }}
+{{- end }}
+
+{{/*
+Name of the etcd role binding
+*/}}
+{{- define "etcd.roleBindingName" }}
+{{- printf "%s-gen-certs-rolebiding" (include "etcd.fullname" .) }}
+{{- end }}
+
+{{/*
 Name of the etcd root-client secret.
 */}}
 {{- define "etcd.clientSecretName" }}

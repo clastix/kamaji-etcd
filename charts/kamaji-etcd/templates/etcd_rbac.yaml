@@ -3,7 +3,7 @@ kind: Role
 metadata:
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
-  name: etcd-gen-certs-role
+  name: {{ include "etcd.roleName" . }}
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:
@@ -29,18 +29,20 @@ rules:
       - get
       - list
       - watch
+    resourceNames:
+      - {{ include "etcd.fullname" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
-  name: etcd-gen-certs-rolebiding
+  name: {{ include "etcd.roleBindingName" . }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: etcd-gen-certs-role
+  name: {{ include "etcd.roleName" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "etcd.serviceAccountName" . }}
