@@ -1,3 +1,4 @@
+{{- $outer := $ -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -52,7 +53,7 @@ data:
       },
       "hosts": [
 {{- range $count := until (int $.Values.replicas) -}}
-        {{ printf "\"etcd-%d.%s.%s.svc.cluster.local\"," $count (include "etcd.serviceName" .) $.Release.Namespace }}
+        {{ printf "\"%s-%d.%s.%s.svc.cluster.local\"," ( include "etcd.fullname" $outer ) $count (include "etcd.serviceName" $outer) $.Release.Namespace }}
 {{- end }}
         "etcd-server.{{ .Release.Namespace }}.svc.cluster.local",
         "etcd-server.{{ .Release.Namespace }}.svc",
@@ -69,10 +70,10 @@ data:
       },
       "hosts": [
 {{- range $count := until (int $.Values.replicas) -}}
-        {{ printf "\"etcd-%d\"," $count }}
-        {{ printf "\"etcd-%d.%s\"," $count (include "etcd.serviceName" .) }}
-        {{ printf "\"etcd-%d.%s.%s.svc\"," $count (include "etcd.serviceName" .) $.Release.Namespace }}
-        {{ printf "\"etcd-%d.%s.%s.svc.cluster.local\"," $count (include "etcd.serviceName" .) $.Release.Namespace }}
+        {{ printf "\"%s-%d\"," ( include "etcd.stsName" $outer ) $count }}
+        {{ printf "\"%s-%d.%s\"," ( include "etcd.stsName" $outer ) $count (include "etcd.serviceName" $outer) }}
+        {{ printf "\"%s-%d.%s.%s.svc\"," ( include "etcd.stsName" $outer ) $count (include "etcd.serviceName" $outer) $.Release.Namespace }}
+        {{ printf "\"%s-%d.%s.%s.svc.cluster.local\"," ( include "etcd.stsName" $outer ) $count (include "etcd.serviceName" $outer) $.Release.Namespace }}
 {{- end }}
         "127.0.0.1"
       ]

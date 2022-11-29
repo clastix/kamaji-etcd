@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
-  name: {{ include "etcd.fullname" . }}
+  name: {{ include "etcd.stsName" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   serviceName: {{ include "etcd.serviceName" . }}
@@ -53,8 +53,8 @@ spec:
             - --name=$(POD_NAME)
             - --initial-cluster-state=new
             - --initial-cluster={{ include "etcd.initialCluster" . }}
-            - --initial-advertise-peer-urls=https://$(POD_NAME).etcd.$(POD_NAMESPACE).svc.cluster.local:{{ .Values.peerApiPort }}
-            - --advertise-client-urls=https://$(POD_NAME).etcd.$(POD_NAMESPACE).svc.cluster.local:{{ .Values.clientPort }}
+            - --initial-advertise-peer-urls=https://$(POD_NAME).{{ include "etcd.serviceName" . }}.$(POD_NAMESPACE).svc.cluster.local:{{ .Values.peerApiPort }}
+            - --advertise-client-urls=https://$(POD_NAME).{{ include "etcd.serviceName" . }}.$(POD_NAMESPACE).svc.cluster.local:{{ .Values.clientPort }}
             - --initial-cluster-token=kamaji
             - --listen-client-urls=https://0.0.0.0:{{ .Values.clientPort }}
             - --listen-metrics-urls=http://0.0.0.0:{{ .Values.metricsPort }}

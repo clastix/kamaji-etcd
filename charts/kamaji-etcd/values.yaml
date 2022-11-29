@@ -80,7 +80,6 @@ defragmentation:
 # -- Labels to add to all etcd pods
 podLabels:
   application: kamaji-etcd
-  foo: bar
 
 # -- Annotations to add to all etcd pods
 podAnnotations: {}

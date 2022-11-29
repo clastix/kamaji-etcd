@@ -30,7 +30,7 @@ rules:
       - list
       - watch
     resourceNames:
-      - {{ include "etcd.fullname" . }}
+      - {{ include "etcd.stsName" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
