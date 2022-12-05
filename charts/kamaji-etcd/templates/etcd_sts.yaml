@@ -104,7 +104,7 @@ spec:
     - metadata:
         name: data
       spec:
-        storageClassName: {{ .Values.persistenVolumeClaim.storageClassName }}
+        storageClassName: {{ .Values.persistenVolumeClaim.storageClass }}
         accessModes:
         {{- range .Values.persistenVolumeClaim.accessModes }}
         - {{ . | quote }}
