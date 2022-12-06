@@ -76,7 +76,7 @@ Here the values you can override:
 | peerApiPort | int | `2380` | The peer API port which servers are listening to. |
 | persistenVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | The Access Mode to storage |
 | persistenVolumeClaim.size | string | `"10Gi"` | The size of persistent storage for etcd data  |
-| persistenVolumeClaim.storageClass | string | `""` | A specific storage class |
+| persistenVolumeClaim.storageClassName | string | `""` | A specific storage class |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
 | podLabels | object | `{"application":"kamaji-etcd"}` | Labels to add to all etcd pods |
 | priorityClassName | string | `"system-cluster-critical"` | The priorityClassName to apply to etcd |

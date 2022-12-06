@@ -61,7 +61,7 @@ persistenVolumeClaim:
   # -- The size of persistent storage for etcd data 
   size: 10Gi
   # -- A specific storage class
-  storageClass: ""
+  storageClassName: ""
   # -- The Access Mode to storage
   accessModes:
   - ReadWriteOnce
