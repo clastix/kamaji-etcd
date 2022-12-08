@@ -64,7 +64,7 @@ Here the values you can override:
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
 | clientPort | int | `2379` | The client request port. |
-| datastore.enabled | bool | `true` | Create a datastore custom resource for Kamaji |
+| datastore.enabled | bool | `false` | Create a datastore custom resource for Kamaji |
 | defragmentation | object | `{"schedule":"*/15 * * * *"}` | Enable storage defragmentation  |
 | defragmentation.schedule | string | `"*/15 * * * *"` | The job scheduled maintenance time for defrag (empty to disable) |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
