@@ -109,6 +109,10 @@ topologySpreadConstraints: []
 #    matchLabels:
 #      application: kamaji-etcd
 
+datastore:
+  # -- Create a datastore custom resource for Kamaji
+  enabled: true
+
 serviceMonitor:
   # -- Enable ServiceMonitor for Prometheus
   enabled: false

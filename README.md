@@ -33,7 +33,7 @@ helm install kamaji-etcd clastix/kamaji-etcd -n kamaji-etcd --create-namespace
 
 The certificates of `etcd`, are stored as secrets into the same namespace:
 
-- `etcd-certs` contains CA, peers, and server certificates
-- `root-client-certs` contains the user `root` certificates
+- `<release_name>-certs` contains CA, peers, and server certificates
+- `<release_name>-root-client-certs` contains the user `root` certificates
 
 Make sure the Kamaji controller can access these secrets in their namespaces. 

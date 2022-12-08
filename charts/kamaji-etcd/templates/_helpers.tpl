@@ -136,7 +136,18 @@ Space separated list of etcd cluster endpoints.
 {{- $outer := . -}}
 {{- $list := list -}}
 {{- range $i, $count := until (int $.Values.replicas) -}}
-    {{- $list = append $list ( printf "https://%s-%d.%s.%s.svc.cluster.local:%d" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) ) -}}
+    {{- $list = append $list ( printf "%s-%d.%s.%s.svc.cluster.local:%d" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) ) -}}
 {{- end }}
 {{- join " " $list -}}
+{{- end }}
+
+
+{{/*
+Space separated list of etcd cluster endpoints.
+*/}}
+{{- define "etcd.endpointsYAML" }}
+{{- $outer := . -}}
+{{- range $i, $count := until (int $.Values.replicas) -}}
+    {{ printf "- %s-%d.%s.%s.svc.cluster.local:%d\n" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) }}
+{{- end }}
 {{- end }}

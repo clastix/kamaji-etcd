@@ -24,11 +24,11 @@ spec:
               - -c
               - |-
                 for ENDPOINT in {{ include "etcd.endpoints" . }}; do
-                  etcdctl --endpoints=${ENDPOINT} defrag;
-                  etcdctl --endpoints=${ENDPOINT} alarm disarm;
-                  etcdctl --endpoints=${ENDPOINT} alarm list;
-                  etcdctl --endpoints=${ENDPOINT} endpoint status -w table;
-                  etcdctl --endpoints=${ENDPOINT} member list -w table;
+                  etcdctl --endpoints=https://${ENDPOINT} defrag;
+                  etcdctl --endpoints=https://${ENDPOINT} alarm disarm;
+                  etcdctl --endpoints=https://${ENDPOINT} alarm list;
+                  etcdctl --endpoints=https://${ENDPOINT} endpoint status -w table;
+                  etcdctl --endpoints=https://${ENDPOINT} member list -w table;
                   sleep 15;
                 done;
             env:
