@@ -111,7 +111,7 @@ topologySpreadConstraints: []
 
 datastore:
   # -- Create a datastore custom resource for Kamaji
-  enabled: true
+  enabled: false
 
 serviceMonitor:
   # -- Enable ServiceMonitor for Prometheus
