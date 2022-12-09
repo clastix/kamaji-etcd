@@ -89,6 +89,8 @@ backup:
     url: http://mys3storage:9000
     # -- The S3 storage bucket
     bucket: mybucket
+    # -- The S3 storage object lifecycle management rules
+    retention: "" #"--expiry-days 7"
     # -- The S3 storage ACCESS KEY credential
     accessKey: minio
     # -- The S3 storage SECRET KEY credential
