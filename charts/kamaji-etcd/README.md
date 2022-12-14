@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.2.2](https://img.shields.io/badge/Version-0.2.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.4](https://img.shields.io/badge/AppVersion-3.5.4-informational?style=flat-square)
+![Version: 0.2.3](https://img.shields.io/badge/Version-0.2.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
@@ -63,6 +63,22 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
+| backup | object | `{"all":false,"enabled":false,"s3":{"accessKey":"minio","bucket":"mybucket","image":{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"},"retention":"","secretKey":"minio","url":"http://mys3storage:9000"},"schedule":"20 3 * * *","snapshotDateFormat":"$(date +%Y%m%d)","snapshotNamePrefix":"mysnapshot"}` | Enable storage backup  |
+| backup.all | bool | `false` | Enable backup for all endpoints. When disabled, only the leader will be taken |
+| backup.enabled | bool | `false` | Enable scheduling backup job |
+| backup.s3 | object | `{"accessKey":"minio","bucket":"mybucket","image":{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"},"retention":"","secretKey":"minio","url":"http://mys3storage:9000"}` | The S3 storage config section |
+| backup.s3.accessKey | string | `"minio"` | The S3 storage ACCESS KEY credential |
+| backup.s3.bucket | string | `"mybucket"` | The S3 storage bucket |
+| backup.s3.image | object | `{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"}` | The S3 client image config section |
+| backup.s3.image.pullPolicy | string | `"IfNotPresent"` | Pull policy to use |
+| backup.s3.image.repository | string | `"minio/mc"` | Install image from specific repo  |
+| backup.s3.image.tag | string | `"RELEASE.2022-11-07T23-47-39Z"` | Install image with specific tag |
+| backup.s3.retention | string | `""` | The S3 storage object lifecycle management rules |
+| backup.s3.secretKey | string | `"minio"` | The S3 storage SECRET KEY credential |
+| backup.s3.url | string | `"http://mys3storage:9000"` | The S3 storage url |
+| backup.schedule | string | `"20 3 * * *"` | The job scheduled maintenance time for backup |
+| backup.snapshotDateFormat | string | `"$(date +%Y%m%d)"` | The backup file date format (bash) |
+| backup.snapshotNamePrefix | string | `"mysnapshot"` | The backup file name prefix |
 | clientPort | int | `2379` | The client request port. |
 | datastore.enabled | bool | `false` | Create a datastore custom resource for Kamaji |
 | defragmentation | object | `{"schedule":"*/15 * * * *"}` | Enable storage defragmentation  |
