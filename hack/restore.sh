@@ -14,13 +14,10 @@ if [ "${DEBUG}" = 1 ]; then
 fi
 
 # Parameters
-KAMAJI_TCP=$1
-ETCD_NAMESPACE=$2
-KAMAJI_TCP_SNAP_URL=$3
-ETCD_INSTANCE=$4
+KAMAJI_TCP_SNAP_URL=$1
 
 # Service variables
-KAMAJI_PODS_JSON="kubectl get pods -n $ETCD_NAMESPACE -l app.kubernetes.io/instance=$ETCD_INSTANCE -o json"
+KAMAJI_PODS_JSON="kubectl get pods -n $ETCD_NAMESPACE -l app.kubernetes.io/instance=$ETCD_NAME -o json"
 KAMAJI_TCP_SNAP="snapshot.db"
 TMP_FOLDER="/tmp"
 ETCD_TMP_FOLDER="$TMP_FOLDER/etcd-restore"
@@ -46,7 +43,7 @@ declare -a KAMAJI_PODS=$($KAMAJI_PODS_JSON |\
 ETCD_PODS_COUNT=$(printf "%s\n" "${KAMAJI_PODS[@]}" |\
     wc -l)
 
-declare -a ETCD_INSTANCE_HOSTIP=$($KAMAJI_PODS_JSON |\
+declare -a ETCD_NAME_HOSTIP=$($KAMAJI_PODS_JSON |\
     jq -j '.items[] | "\(.status.hostIP)\n"')
 
 declare -a KAMAJI_TCP_DATASTORE=$($KAMAJI_PODS_JSON |\
@@ -58,7 +55,7 @@ etcdInitialCluster() {
   for POD in ${KAMAJI_PODS[@]}; do
     ETCD_SVC_SUFFIX=$(kubectl exec -it $POD -c $ETCD_CONTAINER_NAME -n $ETCD_NAMESPACE \
       -- /bin/sh -c \
-          "getent hosts $ETCD_INSTANCE | awk '{print \$2}' | uniq")
+          "getent hosts $ETCD_NAME | awk '{print \$2}' | uniq")
     ETCD_SVC_SUFFIX="${ETCD_SVC_SUFFIX%%[[:cntrl:]]}" # remove dirty characters
     TMP_INITIAL_CLUSTER="$POD=$ETCD_HTTP_PROTOCOL://$POD.$ETCD_SVC_SUFFIX:$ETCD_PEER_PORT"
     ETCD_INITIAL_CLUSTER="$ETCD_INITIAL_CLUSTER,$TMP_INITIAL_CLUSTER"
@@ -166,11 +163,11 @@ etcdSnapshotDownload
 etcdSnapshotRestore
 
 # Scale the etcd cluster to 0 so I can manipulate member folders in peace
-kubectl scale sts $ETCD_INSTANCE --replicas 0 -n $ETCD_NAMESPACE &&\
+kubectl scale sts $ETCD_NAME --replicas 0 -n $ETCD_NAMESPACE &&\
   sleep 10
 
 # Let's make sure that etcd is stopped
-kubectl get pods -n $ETCD_NAMESPACE -l app.kubernetes.io/instance=$ETCD_INSTANCE
+kubectl get pods -n $ETCD_NAMESPACE -l app.kubernetes.io/instance=$ETCD_NAME
 
 # Create a "shell" pod for every kamaji-etcd PVC in order to
 # switch etcd data directories directly from kubectl
@@ -178,7 +175,7 @@ etcdFolderSwitch &&\
   sleep 10
 
 # Re-Scale Up the etcd cluster to the original replicas
-kubectl scale sts $ETCD_INSTANCE --replicas $ETCD_PODS_COUNT -n $ETCD_NAMESPACE &&\
+kubectl scale sts $ETCD_NAME --replicas $ETCD_PODS_COUNT -n $ETCD_NAMESPACE &&\
   sleep 10
 
 # Let's make sure that etcd is Running as expected
