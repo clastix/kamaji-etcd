@@ -73,7 +73,7 @@ Here the values you can override:
 | backup.s3.image.pullPolicy | string | `"IfNotPresent"` | Pull policy to use |
 | backup.s3.image.repository | string | `"minio/mc"` | Install image from specific repo  |
 | backup.s3.image.tag | string | `"RELEASE.2022-11-07T23-47-39Z"` | Install image with specific tag |
-| backup.s3.retention | string | `""` | The S3 storage object lifecycle management rules |
+| backup.s3.retention | string | `""` | The S3 storage object lifecycle management rules; N.B. enabling this option will delete previously set lifecycle rules |
 | backup.s3.secretKey | string | `"minio"` | The S3 storage SECRET KEY credential |
 | backup.s3.url | string | `"http://mys3storage:9000"` | The S3 storage url |
 | backup.schedule | string | `"20 3 * * *"` | The job scheduled maintenance time for backup |
