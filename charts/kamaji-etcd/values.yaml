@@ -89,7 +89,7 @@ backup:
     url: http://mys3storage:9000
     # -- The S3 storage bucket
     bucket: mybucket
-    # -- The S3 storage object lifecycle management rules
+    # -- The S3 storage object lifecycle management rules; N.B. enabling this option will delete previously set lifecycle rules
     retention: "" #"--expiry-days 7"
     # -- The S3 storage ACCESS KEY credential
     accessKey: minio
