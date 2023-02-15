@@ -11,6 +11,8 @@ rules:
     resources:
       - secrets
     verbs:
+      - get
+      - patch
       - delete
     resourceNames:
       - {{ include "etcd.caSecretName" . }}
@@ -29,6 +31,7 @@ rules:
       - get
       - list
       - watch
+      - patch
     resourceNames:
       - {{ include "etcd.stsName" . }}
 ---
