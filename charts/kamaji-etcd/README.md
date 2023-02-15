@@ -94,6 +94,7 @@ Here the values you can override:
 | persistenVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | The Access Mode to storage |
 | persistenVolumeClaim.size | string | `"10Gi"` | The size of persistent storage for etcd data  |
 | persistenVolumeClaim.storageClassName | string | `""` | A specific storage class |
+| persistenVolumeClaim.customAnnotations| object | `{}` | The custom annotations to add to the PVC |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
 | podLabels | object | `{"application":"kamaji-etcd"}` | Labels to add to all etcd pods |
 | priorityClassName | string | `"system-cluster-critical"` | The priorityClassName to apply to etcd |
