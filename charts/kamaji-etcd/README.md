@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.2.4](https://img.shields.io/badge/Version-0.2.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
@@ -92,9 +92,9 @@ Here the values you can override:
 | nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules to schedule etcd |
 | peerApiPort | int | `2380` | The peer API port which servers are listening to. |
 | persistenVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | The Access Mode to storage |
+| persistenVolumeClaim.customAnnotations | object | `{}` | The custom annotations to add to the PVC |
 | persistenVolumeClaim.size | string | `"10Gi"` | The size of persistent storage for etcd data  |
 | persistenVolumeClaim.storageClassName | string | `""` | A specific storage class |
-| persistenVolumeClaim.customAnnotations| object | `{}` | The custom annotations to add to the PVC |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
 | podLabels | object | `{"application":"kamaji-etcd"}` | Labels to add to all etcd pods |
 | priorityClassName | string | `"system-cluster-critical"` | The priorityClassName to apply to etcd |
