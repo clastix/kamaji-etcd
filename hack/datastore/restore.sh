@@ -1,4 +1,4 @@
-#!/bin/bash -eau
+#!/bin/bash
 
 # TO DO
 # Add switch case for parameters
@@ -12,6 +12,8 @@
 if [ "${DEBUG}" = 1 ]; then
     set -x
 fi
+
+set -eu -o pipefail
 
 # Parameters
 KAMAJI_TCP_SNAP_URL=$1
