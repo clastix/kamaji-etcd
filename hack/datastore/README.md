@@ -5,7 +5,7 @@ This script is a simple way to restore the etcd of a `kamaji-etcd` datastore to 
 
 It performs the following steps:
 
-1. Downloads the etcd snapshot specified by KAMAJI_TCP_SNAP_URL
+1. Downloads the etcd snapshot specified during script launch
 2. Populates the ETCD_INITIAL_CLUSTER variable with a list of the TCP etcd pods
 3. Uploads the etcd snapshot to each kamaji-etcd pod
 4. Restores the snapshot to each kamaji-etcd pod using the etcdctl command.
@@ -39,7 +39,7 @@ kubectl scale tcp -n ${TENANT_NAMESPACE} ${TENANT_NAME} --replicas=0
 then, simply execute:
 
 ```bash
-./restore.sh https://mys3publicurl.io/tcp-snapshot.db
+./restore.sh 'https://mys3publicurl.io/tcp-snapshot.db'
 ```
 
 finally, the script will provide the health status of the etcd cluster;
