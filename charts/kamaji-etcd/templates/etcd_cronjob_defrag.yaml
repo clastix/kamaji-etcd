@@ -47,6 +47,9 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
             fsGroup: 1000
+          {{- with .Values.tolerations }}
+          tolerations: {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumes:
           - name: root-client-certs
             secret:

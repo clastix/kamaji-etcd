@@ -48,6 +48,9 @@ spec:
           value: /tmp
         - name: MC
           value: "/usr/bin/mc --config-dir ${MC_CONFIG_DIR}"
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
