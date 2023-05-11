@@ -1,6 +1,6 @@
-# Backup and restore
+# Backup and Restore with Velero
 
-Kamaji “datastores" are just regular stateful pods scheduled on top of a choosen admin cluster; as such, you can take advantage of the same backup and restore methods that you would use to maintain the standard workload.
+A `kamaji-etcd` is just a regular set of stateful pods scheduled on top of the admin cluster; as such, you can take advantage of the same backup and restore methods that you would use to maintain the standard workload.
 
 This guide will assist you in how to backup and restore datastore resources on the admin cluster using [Velero](https://tanzu.vmware.com/developer/guides/what-is-velero/).
 
@@ -53,22 +53,26 @@ velero backup describe kamaji-etcd-dedicated-backup
 
 ## Restore step
 
->WARNING: We assume that the restore takes place on the same cluster from which you backed up. In case of disaster recovery, make sure that the storage-classes installed on the target cluster match the backup ones, OR, change the PV/PVC Storage Classes [during restore](https://velero.io/docs/main/restore-reference/#changing-pvpvc-storage-classes).
+We assume that the restore takes place on the same cluster from which you backed up. In case of disaster recovery, make sure that the Storage Class installed on the target cluster match the backup ones, or change the Storage Class [during restore](https://velero.io/docs/main/restore-reference/#changing-pvpvc-storage-classes).
 
-To restore just the desired datastore, simply execute:
+To exercise the restore, delete any previous instance of the datastore:
+
+```
+kubectl delete namespace dedicated 
+```
+
+and then execute:
 
 ```
 velero restore create kamaji-etcd-dedicated-restore \
     --from-backup kamaji-etcd-dedicated-backup 
 ```
 
-then, verify the restore job status:
+Verify the restore job status:
 
 ```
-velero restore get
+velero restore get kamaji-etcd-dedicated-restore
 
-NAME                        		BACKUP              			  STATUS      STARTED                         COMPLETED                       ERRORS   WARNINGS   CREATED                         SELECTOR
-kamaji-etcd-dedicated-restore      	kamaji-etcd-dedicated-backup      Completed   2023-02-24 12:31:39 +0100 CET   2023-02-24 12:31:40 +0100 CET   0        0          2023-02-24 12:31:39 +0100 CET   <none>
 ```
 
 in case of problems, you can get more information by running:
@@ -86,14 +90,14 @@ NAME                   DRIVER   AGE
 dedicated              etcd     6m
 ```
 
-and finally, check that target PVCs are in _Bound_ status:
+and finally, check that target PVCs are in _bound_ status:
 
 ```
 kubectl get pvc -A
 
-NAMESPACE         NAME                          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-dedicated         data-dedicated-0              Bound    pvc-a5c66737-ef78-4689-b863-037f8382ed78   10Gi       RWO            local-path     6m
-dedicated         data-dedicated-1              Bound    pvc-1e9f77eb-89f3-4256-9508-c18b71fca7ea   10Gi       RWO            local-path     6m
-dedicated         data-dedicated-2              Bound    pvc-957c4802-1e7c-4f37-ac01-b89ad1fa9fdb   10Gi       RWO            local-path     6m
+NAMESPACE     NAME               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+dedicated     data-dedicated-0   Bound    pvc-a5c66737-ef78-4689-b863-037f8382ed78   10Gi       RWO            local-path     6m
+dedicated     data-dedicated-1   Bound    pvc-1e9f77eb-89f3-4256-9508-c18b71fca7ea   10Gi       RWO            local-path     6m
+dedicated     data-dedicated-2   Bound    pvc-957c4802-1e7c-4f37-ac01-b89ad1fa9fdb   10Gi       RWO            local-path     6m
 [...]
 ```

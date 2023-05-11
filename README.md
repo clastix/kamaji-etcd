@@ -16,11 +16,11 @@ A multi-tenant deployment for `etcd` is not common practice. However, `etcd` pro
 - [x] Autocompaction
 - [x] Scheduled defragmentation
 - [x] Auto generate certificates
-- [ ] Scheduled snapshots
+- [x] Scheduled snapshots
 - [x] Metrics Service Monitors
 - [x] Alert rules
 - [ ] Grafana dashboard
-- [ ] Operations guide
+- [x] Operations guide
 - [ ] Benchmarking
 
 ## Getting started
