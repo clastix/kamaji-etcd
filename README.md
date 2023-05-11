@@ -6,7 +6,15 @@ Kamaji turns any Kubernetes cluster into an “admin cluster” to orchestrate o
 
 As of any Kubernetes cluster, a “tenant cluster” needs a datastore where to save the state and be able to retrieve data. Kamaji provides multiple options: a multi-tenant `etcd` as well as _MySQL_, and _PostgreSQL_, thanks to the [kine](https://github.com/k3s-io/kine) integration.
 
-A multi-tenant deployment for `etcd` is not common practice. However, `etcd` provides simple and robust APIs for creating users and setting up role based access control (RBAC) policies to define which user have access to what key prefix. Please, refer to the project [documentation](https://etcd.io/docs/v3.5/op-guide/authentication/) for more details.
+A multi-tenant deployment for `etcd` is not common practice. However, `etcd` provides simple and robust APIs for creating users and setting up role based access control (RBAC) policies to define which user have access to what key prefix.
+
+## Documentation
+Refer to the [etcd documentation](https://etcd.io/docs/v3.5/op-guide). Following sections provide additional procedures to help with a specific setup as it is used into project [Kamaji](https://github.com/clastix/kamaji).
+
+- [Recovery from a snapshot](docs/snapshot-recovery.md)
+- [Backup and Restore with Velero](docs/backup-and-restore.md)
+- [Rotate Certificates](docs/rotate-certificates.md)
+- [Performance and Optimization](docs/performance-and-optimization.md)
 
 ## Roadmap
 
@@ -16,11 +24,10 @@ A multi-tenant deployment for `etcd` is not common practice. However, `etcd` pro
 - [x] Autocompaction
 - [x] Scheduled defragmentation
 - [x] Auto generate certificates
-- [ ] Scheduled snapshots
+- [x] Scheduled snapshots
 - [x] Metrics Service Monitors
 - [x] Alert rules
 - [ ] Grafana dashboard
-- [ ] Operations guide
 - [ ] Benchmarking
 
 ## Getting started
