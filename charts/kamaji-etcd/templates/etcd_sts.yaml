@@ -24,7 +24,6 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}      
     spec:
-      serviceAccountName: {{ include "etcd.serviceAccountName" . }}
       volumes:
         - name: certs
           secret:

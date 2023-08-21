@@ -5,7 +5,7 @@ metadata:
     {{- include "etcd.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-delete
-    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-weight": "10"
     "helm.sh/hook-delete-policy": "hook-succeeded,hook-failed"
   name: "{{ .Release.Name }}-etcd-teardown"
   namespace: {{ .Release.Namespace }}

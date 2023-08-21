@@ -3,9 +3,6 @@ apiVersion: kamaji.clastix.io/v1alpha1
 kind: DataStore
 metadata:
   name: {{ include "etcd.fullname" . }}
-  annotations:
-    "helm.sh/hook": post-install,post-delete
-    "helm.sh/hook-weight": "5"
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
 spec:
