@@ -5,8 +5,11 @@ metadata:
   name: {{ include "etcd.serviceAccountName" . }}
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
-  {{- with .Values.serviceAccount.annotations }}
   annotations:
+    "helm.sh/hook": pre-install,post-install,pre-delete
+    "helm.sh/hook-delete-policy": "hook-succeeded,hook-failed"
+    "helm.sh/hook-weight": "0"
+  {{- with .Values.serviceAccount.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}

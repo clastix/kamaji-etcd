@@ -4,8 +4,8 @@ metadata:
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "1"
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "10"
     "helm.sh/hook-delete-policy": "hook-succeeded,hook-failed"
   name: "{{ .Release.Name }}-etcd-setup-1"
   namespace: {{ .Release.Namespace }}
@@ -42,8 +42,7 @@ spec:
             - |-
               kubectl --namespace={{ .Release.Namespace }} delete secret --ignore-not-found=true {{ include "etcd.caSecretName" . }} {{ include "etcd.clientSecretName" . }} &&
               kubectl --namespace={{ .Release.Namespace }} create secret generic {{ include "etcd.caSecretName" . }} --from-file=/certs/ca.crt --from-file=/certs/ca.key --from-file=/certs/peer-key.pem --from-file=/certs/peer.pem --from-file=/certs/server-key.pem --from-file=/certs/server.pem &&
-              kubectl --namespace={{ .Release.Namespace }} create secret tls {{ include "etcd.clientSecretName" . }} --key=/certs/root-client-key.pem --cert=/certs/root-client.pem &&
-              kubectl --namespace={{ .Release.Namespace }} rollout status sts/{{ include "etcd.stsName" . }} --timeout=300s
+              kubectl --namespace={{ .Release.Namespace }} create secret tls {{ include "etcd.clientSecretName" . }} --key=/certs/root-client-key.pem --cert=/certs/root-client.pem
           volumeMounts:
             - mountPath: /certs
               name: certs
