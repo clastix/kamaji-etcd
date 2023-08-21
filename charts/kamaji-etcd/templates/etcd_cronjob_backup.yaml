@@ -62,7 +62,7 @@ spec:
               - -c
               - |-
                 cd /opt/etcd-dump
-                if $MC alias set myminio {{ .Values.backup.s3.url }} {{ .Values.backup.s3.accessKey }} {{ .Values.backup.s3.secretKey }} \
+                if $MC alias set myminio {{ .Values.backup.s3.url }} {{ .Values.backup.s3.accessKey }} {{ .Values.backup.s3.secretKey | quote }} \
                 && $MC ping myminio -c 3 -e 3 ; then
                   echo -e "\nUploading snapshot(s):"
                   $MC cp {{ .Values.backup.snapshotNamePrefix }}_*.db myminio/{{ .Values.backup.s3.bucket }}
