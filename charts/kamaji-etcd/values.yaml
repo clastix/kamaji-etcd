@@ -94,10 +94,20 @@ backup:
     bucket: mybucket
     # -- The S3 storage object lifecycle management rules; N.B. enabling this option will delete previously set lifecycle rules
     retention: "" #"--expiry-days 7"
-    # -- The S3 storage ACCESS KEY credential
-    accessKey: minio
-    # -- The S3 storage SECRET KEY credential
-    secretKey: minio
+    # -- The S3 storage ACCESS KEY credential. The plain value has precedence over the valueFrom that can be used to retrieve the value from a Secret.
+    accessKey:
+      value: ""
+      valueFrom: {}
+        # secretKeyRef:
+        #   key: access_key
+        #   name: minio-key
+    # -- The S3 storage SECRET KEY credential. The plain value has precedence over the valueFrom that can be used to retrieve the value from a Secret.
+    secretKey:
+      value: ""
+      valueFrom: {}
+        # secretKeyRef:
+        #   key: secret_key
+        #   name: minio-key
     # -- The S3 client image config section
     image:
       # -- Install image from specific repo 

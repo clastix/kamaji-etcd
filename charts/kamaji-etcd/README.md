@@ -63,18 +63,18 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
-| backup | object | `{"all":false,"enabled":false,"s3":{"accessKey":"minio","bucket":"mybucket","image":{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"},"retention":"","secretKey":"minio","url":"http://mys3storage:9000"},"schedule":"20 3 * * *","snapshotDateFormat":"$(date +%Y%m%d)","snapshotNamePrefix":"mysnapshot"}` | Enable storage backup  |
+| backup | object | `{"all":false,"enabled":false,"s3":{"accessKey":{"value":"","valueFrom":{}},"bucket":"mybucket","image":{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"},"retention":"","secretKey":{"value":"","valueFrom":{}},"url":"http://mys3storage:9000"},"schedule":"20 3 * * *","snapshotDateFormat":"$(date +%Y%m%d)","snapshotNamePrefix":"mysnapshot"}` | Enable storage backup  |
 | backup.all | bool | `false` | Enable backup for all endpoints. When disabled, only the leader will be taken |
 | backup.enabled | bool | `false` | Enable scheduling backup job |
-| backup.s3 | object | `{"accessKey":"minio","bucket":"mybucket","image":{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"},"retention":"","secretKey":"minio","url":"http://mys3storage:9000"}` | The S3 storage config section |
-| backup.s3.accessKey | string | `"minio"` | The S3 storage ACCESS KEY credential |
+| backup.s3 | object | `{"accessKey":{"value":"","valueFrom":{}},"bucket":"mybucket","image":{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"},"retention":"","secretKey":{"value":"","valueFrom":{}},"url":"http://mys3storage:9000"}` | The S3 storage config section |
+| backup.s3.accessKey | object | `{"value":"","valueFrom":{}}` | The S3 storage ACCESS KEY credential. The plain value has precedence over the valueFrom that can be used to retrieve the value from a Secret. |
 | backup.s3.bucket | string | `"mybucket"` | The S3 storage bucket |
 | backup.s3.image | object | `{"pullPolicy":"IfNotPresent","repository":"minio/mc","tag":"RELEASE.2022-11-07T23-47-39Z"}` | The S3 client image config section |
 | backup.s3.image.pullPolicy | string | `"IfNotPresent"` | Pull policy to use |
 | backup.s3.image.repository | string | `"minio/mc"` | Install image from specific repo  |
 | backup.s3.image.tag | string | `"RELEASE.2022-11-07T23-47-39Z"` | Install image with specific tag |
 | backup.s3.retention | string | `""` | The S3 storage object lifecycle management rules; N.B. enabling this option will delete previously set lifecycle rules |
-| backup.s3.secretKey | string | `"minio"` | The S3 storage SECRET KEY credential |
+| backup.s3.secretKey | object | `{"value":"","valueFrom":{}}` | The S3 storage SECRET KEY credential. The plain value has precedence over the valueFrom that can be used to retrieve the value from a Secret. |
 | backup.s3.url | string | `"http://mys3storage:9000"` | The S3 storage url |
 | backup.schedule | string | `"20 3 * * *"` | The job scheduled maintenance time for backup |
 | backup.snapshotDateFormat | string | `"$(date +%Y%m%d)"` | The backup file date format (bash) |

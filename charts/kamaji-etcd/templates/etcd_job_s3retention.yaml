@@ -27,18 +27,18 @@ spec:
           - -c
           - |-
             cd ${MC_CONFIG_DIR}
-            if $MC alias set myminio $S3_URL $S3_ACCESS_KEY $S3_SECRET_KEY \
+            if $MC alias set myminio ${S3_URL} ${S3_ACCESS_KEY} ${S3_SECRET_KEY} \
             && $MC ping myminio -c 3 -e 3 ; then
               echo -e "\nCheck for already created object lifecycle management rule(s):"
-              if $MC ilm ls myminio/$S3_BUCKET ; then
+              if $MC ilm ls myminio/${S3_BUCKET} ; then
                 echo -e "\nObject lifecycle management rule(s) found - Clean up:"
-                $MC ilm rm --all --force myminio/$S3_BUCKET
+                $MC ilm rm --all --force myminio/${S3_BUCKET}
               else
                 echo -e "\nNo object lifecycle management rule(s) found - Continue"
               fi
               echo -e "\nAdding object lifecycle management rule(s):"
-              $MC ilm add {{ .Values.backup.s3.retention }} myminio/$S3_BUCKET
-              $MC ilm ls myminio/$S3_BUCKET
+              $MC ilm add {{ .Values.backup.s3.retention }} myminio/${S3_BUCKET}
+              $MC ilm ls myminio/${S3_BUCKET}
             else
               echo -e "\nERROR: S3 storage could not be configured;\nCheck your S3 URL/Credentials or network connectivity"
               exit 1
@@ -47,9 +47,19 @@ spec:
         - name: S3_URL
           value: {{ .Values.backup.s3.url | quote }}
         - name: S3_ACCESS_KEY
-          value: {{ .Values.backup.s3.accessKey | quote }}
+      {{- if .Values.backup.s3.accessKey.value }}
+          value: {{ .Values.backup.s3.accessKey.value | quote }}
+      {{- else }}
+          valueFrom:
+            {{- toYaml .Values.backup.s3.accessKey.valueFrom | nindent 12 }}
+      {{- end }}
         - name: S3_SECRET_KEY
-          value: {{ .Values.backup.s3.secretKey | quote }}
+      {{- if .Values.backup.s3.secretKey.value }}
+          value: {{ .Values.backup.s3.secretKey.value | quote }}
+      {{- else }}
+          valueFrom:
+            {{- toYaml .Values.backup.s3.secretKey.valueFrom | nindent 12 }}
+      {{- end }}
         - name: S3_BUCKET
           value: {{ .Values.backup.s3.bucket | quote }}
         - name: MC_CONFIG_DIR

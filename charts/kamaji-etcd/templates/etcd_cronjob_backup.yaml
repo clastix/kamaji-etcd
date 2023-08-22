@@ -62,7 +62,7 @@ spec:
               - -c
               - |-
                 cd /opt/etcd-dump
-                if $MC alias set myminio {{ .Values.backup.s3.url }} {{ .Values.backup.s3.accessKey }} {{ .Values.backup.s3.secretKey | quote }} \
+                if $MC alias set myminio ${S3_URL} ${S3_ACCESS_KEY} ${S3_SECRET_KEY} \
                 && $MC ping myminio -c 3 -e 3 ; then
                   echo -e "\nUploading snapshot(s):"
                   $MC cp {{ .Values.backup.snapshotNamePrefix }}_*.db myminio/{{ .Values.backup.s3.bucket }}
@@ -71,6 +71,22 @@ spec:
                   exit 1
                 fi
             env:
+            - name: S3_URL
+              value: {{ .Values.backup.s3.url | quote }}
+            - name: S3_ACCESS_KEY
+          {{- if .Values.backup.s3.accessKey.value }}
+              value: {{ .Values.backup.s3.accessKey.value | quote }}
+          {{- else }}
+              valueFrom:
+                {{- toYaml .Values.backup.s3.accessKey.valueFrom | nindent 16 }}
+          {{- end }}
+            - name: S3_SECRET_KEY
+          {{- if .Values.backup.s3.secretKey.value }}
+              value: {{ .Values.backup.s3.secretKey.value | quote }}
+          {{- else }}
+              valueFrom:
+                {{- toYaml .Values.backup.s3.secretKey.valueFrom | nindent 16 }}
+          {{- end }}
             - name: MC_CONFIG_DIR
               value: /tmp
             - name: MC
