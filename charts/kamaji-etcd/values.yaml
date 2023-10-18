@@ -57,7 +57,7 @@ snapshotCount: "10000"
 # -- Raise alarms when backend size exceeds the given quota. It will put the cluster into a maintenance mode which only accepts key reads and deletes. 
 quotaBackendBytes: "8589934592" # 8Gi
 
-persistenVolumeClaim:
+persistentVolumeClaim:
   # -- The size of persistent storage for etcd data 
   size: 10Gi
   # -- A specific storage class

@@ -102,16 +102,16 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: data
-        {{- with .Values.persistenVolumeClaim.customAnnotations }}
+        {{- with .Values.persistentVolumeClaim.customAnnotations }}
         annotations:
           {{- toYaml . | nindent 10 }}
         {{- end }}
       spec:
-        storageClassName: {{ .Values.persistenVolumeClaim.storageClassName }}
+        storageClassName: {{ .Values.persistentVolumeClaim.storageClassName }}
         accessModes:
-        {{- range .Values.persistenVolumeClaim.accessModes }}
+        {{- range .Values.persistentVolumeClaim.accessModes }}
         - {{ . | quote }}
         {{- end }}
         resources:
           requests:
-            storage: {{ .Values.persistenVolumeClaim.size }}
+            storage: {{ .Values.persistentVolumeClaim.size }}
