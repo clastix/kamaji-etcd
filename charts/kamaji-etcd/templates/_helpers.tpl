@@ -124,7 +124,7 @@ Comma separated list of etcd cluster peers.
 {{- $outer := . -}}
 {{- $list := list -}}
 {{- range $i, $count := until (int $.Values.replicas) -}}
-    {{- $list = append $list ( printf "%s-%d=https://%s-%d.%s.%s.svc.%s:%d" ( include "etcd.stsName" $outer ) $i ( include "etcd.fullname" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.peerApiPort) $.Values.clusterDomain ) -}}
+    {{- $list = append $list ( printf "%s-%d=https://%s-%d.%s.%s.svc.%s:%d" ( include "etcd.stsName" $outer ) $i ( include "etcd.fullname" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace $.Values.clusterDomain (int $.Values.peerApiPort) ) -}}
 {{- end }}
 {{- join "," $list -}}
 {{- end }}
@@ -136,7 +136,7 @@ Space separated list of etcd cluster endpoints.
 {{- $outer := . -}}
 {{- $list := list -}}
 {{- range $i, $count := until (int $.Values.replicas) -}}
-    {{- $list = append $list ( printf "%s-%d.%s.%s.svc.%s:%d" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) $.Values.clusterDomain ) -}}
+    {{- $list = append $list ( printf "%s-%d.%s.%s.svc.%s:%d" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace $.Values.clusterDomain (int $.Values.clientPort) ) -}}
 {{- end }}
 {{- join " " $list -}}
 {{- end }}
@@ -147,7 +147,7 @@ Space separated list of etcd cluster endpoints.
 {{- define "etcd.endpointsYAML" }}
 {{- $outer := . -}}
 {{- range $i, $count := until (int $.Values.replicas) -}}
-    {{ printf "- %s-%d.%s.%s.svc.%s:%d\n" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace (int $.Values.clientPort) $.Values.clusterDomain }}
+    {{ printf "- %s-%d.%s.%s.svc.%s:%d\n" ( include "etcd.stsName" $outer ) $count ( include "etcd.serviceName" $outer ) $.Release.Namespace $.Values.clusterDomain (int $.Values.clientPort) }}
 {{- end }}
 {{- end }}
 
