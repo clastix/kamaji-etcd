@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.5.1](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
+![Version: 0.5.1](https://img.shields.io/badge/Version-0.5.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
@@ -80,6 +80,7 @@ Here the values you can override:
 | backup.snapshotDateFormat | string | `"$(date +%Y%m%d)"` | The backup file date format (bash) |
 | backup.snapshotNamePrefix | string | `"mysnapshot"` | The backup file name prefix |
 | clientPort | int | `2379` | The client request port. |
+| clusterDomain | string | `"cluster.local"` | Domain of the Kubernetes cluster. |
 | datastore.enabled | bool | `false` | Create a datastore custom resource for Kamaji |
 | defragmentation | object | `{"schedule":"*/15 * * * *"}` | Enable storage defragmentation  |
 | defragmentation.schedule | string | `"*/15 * * * *"` | The job scheduled maintenance time for defrag (empty to disable) |
