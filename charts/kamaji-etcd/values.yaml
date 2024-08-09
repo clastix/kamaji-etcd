@@ -20,6 +20,7 @@ image:
   # -- Pull policy to use
   pullPolicy: IfNotPresent
 
+imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
