@@ -1,0 +1,29 @@
+name: Helm Chart
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: azure/setup-helm@v1
+        with:
+          version: 3.3.4
+      - name: Linting Chart
+        run: helm lint ./charts/kamaji-etcd
+  diff:
+    name: diff
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make -C charts/kamaji-etcd docs
+      - name: Checking if Helm docs is not aligned
+        run: if [[ $(git diff | wc -l) -gt 0 ]]; then echo ">>> Untracked changes have not been committed" && git --no-pager diff && exit 1; fi
+
