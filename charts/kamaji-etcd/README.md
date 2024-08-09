@@ -89,6 +89,7 @@ Here the values you can override:
 | image.pullPolicy | string | `"IfNotPresent"` | Pull policy to use |
 | image.repository | string | `"quay.io/coreos/etcd"` | Install image from specific repo  |
 | image.tag | string | `""` | Install image with specific tag, overwrite the tag in the chart |
+| imagePullSecrets | list | `[]` |  |
 | livenessProbe | object | `{}` | The livenessProbe for the etcd container |
 | metricsPort | int | `2381` | The port where etcd exposes metrics. |
 | nameOverride | string | `""` |  |
