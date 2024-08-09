@@ -85,11 +85,13 @@ Here the values you can override:
 | defragmentation | object | `{"schedule":"*/15 * * * *"}` | Enable storage defragmentation  |
 | defragmentation.schedule | string | `"*/15 * * * *"` | The job scheduled maintenance time for defrag (empty to disable) |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
+| fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` | Pull policy to use |
 | image.repository | string | `"quay.io/coreos/etcd"` | Install image from specific repo  |
 | image.tag | string | `""` | Install image with specific tag, overwrite the tag in the chart |
 | livenessProbe | object | `{}` | The livenessProbe for the etcd container |
 | metricsPort | int | `2381` | The port where etcd exposes metrics. |
+| nameOverride | string | `""` |  |
 | nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules to schedule etcd |
 | peerApiPort | int | `2380` | The peer API port which servers are listening to. |
 | persistentVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | The Access Mode to storage |
