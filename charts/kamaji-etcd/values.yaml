@@ -20,6 +20,9 @@ image:
   # -- Pull policy to use
   pullPolicy: IfNotPresent
 
+nameOverride: ""
+fullnameOverride: ""
+
 # -- The peer API port which servers are listening to.
 peerApiPort: 2380
 
