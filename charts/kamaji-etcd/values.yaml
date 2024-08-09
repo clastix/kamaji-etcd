@@ -165,6 +165,8 @@ topologySpreadConstraints: []
 datastore:
   # -- Create a datastore custom resource for Kamaji
   enabled: false
+  # -- Name of Kamaji datastore, set to fully qualified etcd name when null or not provided
+  name: ""
 
 serviceMonitor:
   # -- Enable ServiceMonitor for Prometheus

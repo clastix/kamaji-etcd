@@ -2,7 +2,7 @@
 apiVersion: kamaji.clastix.io/v1alpha1
 kind: DataStore
 metadata:
-  name: {{ include "etcd.fullname" . }}
+  name: {{ .Values.datastore.name | default (include "etcd.fullname" .) }}
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
 spec:

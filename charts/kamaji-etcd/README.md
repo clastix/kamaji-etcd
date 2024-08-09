@@ -82,6 +82,7 @@ Here the values you can override:
 | clientPort | int | `2379` | The client request port. |
 | clusterDomain | string | `"cluster.local"` | Domain of the Kubernetes cluster. |
 | datastore.enabled | bool | `false` | Create a datastore custom resource for Kamaji |
+| datastore.name | string | `""` | Name of Kamaji datastore, set to fully qualified etcd name when null or not provided |
 | defragmentation | object | `{"schedule":"*/15 * * * *"}` | Enable storage defragmentation  |
 | defragmentation.schedule | string | `"*/15 * * * *"` | The job scheduled maintenance time for defrag (empty to disable) |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
