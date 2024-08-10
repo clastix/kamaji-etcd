@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
+![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
@@ -130,8 +130,8 @@ Here the values you can override:
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Adriano Pezzuto | <me@bsctl.io> |  |
-| Dario Tranchitella | <dario@tranchitella.eu> |  |
+| Adriano Pezzuto | <adriano@clastix.io> | <https://clastix.io> |
+| Dario Tranchitella | <dario@clastix.io> | <https://clastix.io> |
 
 ## Source Code
 
