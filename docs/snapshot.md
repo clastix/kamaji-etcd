@@ -1,21 +1,18 @@
-# Recover from a snapshot
+# Take a snapshot
 
-This guide provides instructions on how to use the `restore.sh` script to restore a `kamaji-etcd` datastore from a snapshot.
+The `backup.sh` script is designed to create and schedule jobs for backing up a kamaji-etcd cluster. The script generates Kubernetes CronJob manifests and applies them to the specified namespace.
 
 ## Overview
-
 The script performs the following steps:
 
-1. Scales down the `etcd` StatefulSet to zero replicas.
-2. Waits for the `etcd` pods to be deleted.
-3. Creates a restore job for each `etcd` member (assumes three members) to restore the data from the snapshot.
-4. Waits for each restore job to complete.
-5. Scales the `etcd` StatefulSet back to three replicas.
+1. Creates a Kubernetes CronJob manifests for each `etcd` member (assumes three members).
+2. Each job takes a snapshot of the `etcd` member and uploads it to a s3-like storage.
 
-## Requirements
+
+## Prerequisites
 
 - Ensure you have `kubectl` installed and configured to interact with the management cluster.
-- The snapshot should be taken previously with the `backup.sh` script. It is assumed that the snapshot file is stored on an S3-like storage.
+- It is assumed that the snapshot files will be stored on an S3-like storage.
 - A kubernetes secret called `backup-storage-secret` containing the parameters and credentials to access the storage must be created in the same namespace where `kamaji-etcd` is running.
 
 ### Creating the Secret
@@ -32,12 +29,12 @@ kubectl create secret generic backup-storage-secret \
   -n <etcd_namespace>
 ```
 
-## Usage
 
+## Usage
 To run the script, use the following command:
 
 ```bash
-./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot]
+./backup.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-j schedule]
 ```
 
 ## Parameters
@@ -45,17 +42,18 @@ To run the script, use the following command:
 - `-e etcd_name`: Name of the etcd StatefulSet (default: `kamaji-etcd`)
 - `-s etcd_service`: Name of the etcd service (default: `kamaji-etcd`)
 - `-n etcd_namespace`: Namespace of the etcd StatefulSet (default: `kamaji-system`)
-- `-f snapshot`: Snapshot file to restore from (required)
+- `-j schedule`: Cron schedule for the backup job (default: `"0 0 * * *"`, which means daily at midnight)
 
-For example:
+This example schedules the backup job to run daily at 3 AM:
 
 ```bash
-./restore.sh -e my-etcd -s my-etcd-service -n my-namespace -f snapshot.db
+./backup.sh -e my-etcd -s my-etcd-service -n my-namespace -j "0 3 * * *"
 ```
+
 
 ## Notes
 
-- Ensure that the snapshot file is accessible and the necessary secret for accessing the storage is configured in the same namespace.
+- Ensure you have access a s3-like storage and the necessary secret is configured in Kubernetes.
 - The script uses `kubectl` commands, so ensure you have the necessary permissions to perform these operations.
 
 ## Debug mode

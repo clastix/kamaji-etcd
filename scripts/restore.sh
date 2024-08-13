@@ -1,184 +1,181 @@
 #!/bin/bash
 
-# TO DO
-# Add switch case for parameters
-# Detect kamaji-controller deploy method (deploy/sts)
-# Create a bash function for scaling
-# Add kamaji tcp scale down/up
-# Add helper
-# Add nice prints/decoration to better understand what's happening during shell execution
-# Improve etcdHealth func to auto check HEALTH column
-
+# Enable debugging, exit on errors, and ensure the script fails if any command in a pipeline fails
 if [ "${DEBUG}" = 1 ]; then
     set -x
 fi
-
 set -eu -o pipefail
 
-# Parameters
-KAMAJI_TCP_SNAP_URL=$1
+# Default values for the parameters
+ETCD_NAME="kamaji-etcd"
+ETCD_SERVICE="kamaji-etcd"
+ETCD_NAMESPACE="kamaji-system"
+SNAPSHOT=""  # snapshot file
 
-# Service variables
-KAMAJI_PODS_JSON="kubectl get pods -n $ETCD_NAMESPACE -l app.kubernetes.io/instance=$ETCD_NAME -o json"
-KAMAJI_TCP_SNAP="snapshot.db"
-TMP_FOLDER="/tmp"
-ETCD_TMP_FOLDER="$TMP_FOLDER/etcd-restore"
-ETCD_DEFAULT_FOLDER="member"
-ETCD_SNAPSHOT_FOLDER="snapshot"
-ETCD_INITIAL_CLUSTER=""
-ETCD_CLIENT_PORT=2379
-ETCD_PEER_PORT=2380
-ETCD_HTTP_PROTOCOL="https"
+# Parse script parameters
+while getopts "e:s:n:f:" opt; do
+  case ${opt} in
+    e ) ETCD_NAME=$OPTARG ;;
+    s ) ETCD_SERVICE=$OPTARG ;;
+    n ) ETCD_NAMESPACE=$OPTARG ;;
+    f ) SNAPSHOT=$OPTARG ;;
+    \? ) echo "Usage: ./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot]"
+         exit 1 ;;
+  esac
+done
 
-ETCD_CONTAINER_NAME=$($KAMAJI_PODS_JSON |\
-    jq -j '.items[] | "\(.spec.containers[0].name)\n"' |\
-        uniq)
+# Function to create the job manifest for restoring etcd from a snapshot
+create_restore_job() {
+  local index=$1
+  local etcd_name=$2
+  local etcd_service=$3
+  local etcd_namespace=$4
 
-ETCD_RUN_FOLDER=$($KAMAJI_PODS_JSON |\
-    jq -j '.items[] | "\(.spec.containers[0].volumeMounts[0].mountPath)\n"' |\
-        uniq)
-
-# Retrieve informations about deployed Kamaji Pods
-declare -a KAMAJI_PODS=$($KAMAJI_PODS_JSON |\
-    jq -j '.items[] | "\(.metadata.name)\n"')
-
-ETCD_PODS_COUNT=$(printf "%s\n" "${KAMAJI_PODS[@]}" |\
-    wc -l)
-
-declare -a ETCD_NAME_HOSTIP=$($KAMAJI_PODS_JSON |\
-    jq -j '.items[] | "\(.status.hostIP)\n"')
-
-declare -a KAMAJI_TCP_DATASTORE=$($KAMAJI_PODS_JSON |\
-    jq -j '.items[] | "\(.spec.volumes[].persistentVolumeClaim.claimName)\n"' |\
-        grep -v null)
-
-# Functions
-etcdInitialCluster() {
-  for POD in ${KAMAJI_PODS[@]}; do
-    ETCD_SVC_SUFFIX=$(kubectl exec -it $POD -c $ETCD_CONTAINER_NAME -n $ETCD_NAMESPACE \
-      -- /bin/sh -c \
-          "getent hosts $ETCD_NAME | awk '{print \$2}' | uniq")
-    ETCD_SVC_SUFFIX="${ETCD_SVC_SUFFIX%%[[:cntrl:]]}" # remove dirty characters
-    TMP_INITIAL_CLUSTER="$POD=$ETCD_HTTP_PROTOCOL://$POD.$ETCD_SVC_SUFFIX:$ETCD_PEER_PORT"
-    ETCD_INITIAL_CLUSTER="$ETCD_INITIAL_CLUSTER,$TMP_INITIAL_CLUSTER"
-  done
-  ETCD_INITIAL_CLUSTER="${ETCD_INITIAL_CLUSTER:1}" # remove first comma
-}
-
-etcdSnapshotDownload() {
-  wget -nv $KAMAJI_TCP_SNAP_URL -O $KAMAJI_TCP_SNAP &&\
-    md5sum $KAMAJI_TCP_SNAP
-}
-
-etcdSnapshotUpload() {
-  kubectl cp $KAMAJI_TCP_SNAP $ETCD_NAMESPACE/$POD:$TMP_FOLDER -c $ETCD_CONTAINER_NAME
-}
-
-etcdSnapshotRestore() {
-  for POD in ${KAMAJI_PODS[@]}; do
-    etcdSnapshotUpload
-
-    kubectl exec -it $POD -c $ETCD_CONTAINER_NAME -n $ETCD_NAMESPACE \
-      -- /bin/sh -c \
-          "cd $TMP_FOLDER
-           chown root:root $KAMAJI_TCP_SNAP &&
-           etcdutl --write-out=table snapshot status $KAMAJI_TCP_SNAP &&
-           mkdir $ETCD_TMP_FOLDER &&
-           etcdutl \
-              --data-dir $ETCD_TMP_FOLDER \
-              --name $POD \
-              --initial-cluster $ETCD_INITIAL_CLUSTER \
-              --initial-cluster-token kamaji \
-              --initial-advertise-peer-urls $ETCD_HTTP_PROTOCOL://$POD.$ETCD_SVC_SUFFIX:$ETCD_PEER_PORT \
-              snapshot restore $KAMAJI_TCP_SNAP &&
-           cp -pR $ETCD_TMP_FOLDER/$ETCD_DEFAULT_FOLDER $ETCD_RUN_FOLDER/$ETCD_SNAPSHOT_FOLDER"
-  done
-}
-
-etcdFolderSwitch() {
-  for DATA in ${KAMAJI_TCP_DATASTORE[@]}; do
-    KAMAJI_PVC_JSON="kubectl get pvc $DATA -n $ETCD_NAMESPACE -o json"
-  
-    PVC_SCNAME=$($KAMAJI_PVC_JSON |\
-      jq -j '.spec.storageClassName')
-  
-    PVC_VOLUMENAME=$($KAMAJI_PVC_JSON |\
-      jq -j '.spec.volumeName')
-  
-    PVC_NODE=$($KAMAJI_PVC_JSON |\
-      jq -j '.metadata.annotations["volume.kubernetes.io/selected-node"]')
- 
-  cat <<EOF | kubectl apply -f -
-  apiVersion: batch/v1
-  kind: Job
-  metadata:
-    name: $DATA-restore-job
-    namespace: $ETCD_NAMESPACE
-  spec:
-    ttlSecondsAfterFinished: 10
-    template:
-      spec:
-        restartPolicy: Never
-        containers:
-          - name: $DATA-restore
-            image: alpine:3.17.0
-            command: ["/bin/ash"]
-            args: ["-c", "cd $ETCD_TMP_FOLDER && mv $ETCD_DEFAULT_FOLDER $ETCD_DEFAULT_FOLDER-$(date +%Y%m%d%H%M).BAK && mv $ETCD_SNAPSHOT_FOLDER $ETCD_DEFAULT_FOLDER"]
-            volumeMounts:
-              - mountPath: "$ETCD_TMP_FOLDER"
-                name: $DATA-restore-storage
-        volumes:
-          - name: $DATA-restore-storage
-            persistentVolumeClaim:
-              claimName: $DATA
-        nodeSelector:
-          kubernetes.io/hostname: $PVC_NODE
+  cat <<EOF > ${etcd_name}-restore-job-${index}.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${etcd_name}-restore-job-${index}
+  namespace: $etcd_namespace
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: minio-client
+        image: minio/mc:RELEASE.2022-11-07T23-47-39Z
+        command:
+        - sh
+        - -c
+        - |
+          # Set up MinIO client and download the snapshot
+          if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
+             \$MC cp storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER}/${SNAPSHOT} /opt/dump;
+          else
+             exit 1;
+          fi
+        env:
+        - name: STORAGE_URL
+          valueFrom:
+            secretKeyRef:
+              name: backup-storage-secret
+              key: storage-url
+        - name: STORAGE_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backup-storage-secret
+              key: storage-access-key
+        - name: STORAGE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backup-storage-secret
+              key: storage-secret-key
+        - name: STORAGE_BUCKET_NAME
+          valueFrom:
+            secretKeyRef:
+              name: backup-storage-secret
+              key: storage-bucket-name
+        - name: STORAGE_BUCKET_FOLDER
+          valueFrom:
+            secretKeyRef:
+              name: backup-storage-secret
+              key: storage-bucket-folder
+        - name: MC
+          value: "/usr/bin/mc --config-dir /tmp"
+        volumeMounts:
+        - mountPath: /opt/dump
+          name: shared-data
+      containers:
+      - name: etcd-client
+        image: quay.io/coreos/etcd:v3.5.6
+        command:
+        - sh
+        - -c
+        - |
+            # Remove existing etcd member data and restore from snapshot
+            rm -rf /var/run/etcd/member
+            etcdctl snapshot restore /opt/dump/${SNAPSHOT} \
+            --data-dir /var/run/etcd \
+            --name ${etcd_name}-${index} \
+            --initial-cluster ${etcd_name}-0=https://${etcd_name}-0.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-1=https://${etcd_name}-1.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-2=https://${etcd_name}-2.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380 \
+            --initial-cluster-token kamaji \
+            --initial-advertise-peer-urls https://${etcd_name}-${index}.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380
+        env:
+        - name: ENDPOINTS
+          value: https://localhost:2379
+        - name: ETCDCTL_CACERT
+          value: /opt/certs/ca/ca.crt
+        - name: ETCDCTL_CERT
+          value: /opt/certs/root-client-certs/tls.crt
+        - name: ETCDCTL_KEY
+          value: /opt/certs/root-client-certs/tls.key
+        volumeMounts:
+        - mountPath: /opt/certs/root-client-certs
+          name: root-client-certs
+        - mountPath: /opt/certs/ca
+          name: certs
+        - mountPath: /opt/dump
+          name: shared-data
+        - mountPath: /var/run/etcd
+          name: data 
+      restartPolicy: OnFailure
+      serviceAccountName: ${etcd_name}
+      volumes:
+      - name: shared-data
+        emptyDir: {}
+      - name: data
+        persistentVolumeClaim:
+          claimName: data-${etcd_name}-${index}
+      - name: root-client-certs
+        secret:
+          secretName: ${etcd_name}-root-client-certs
+      - name: certs
+        secret:
+          secretName: ${etcd_name}-certs
 EOF
-  done
 }
 
-etcdHealth() {
-  for POD in ${KAMAJI_PODS[@]}; do
-    kubectl exec -it $POD -c $ETCD_CONTAINER_NAME -n $ETCD_NAMESPACE \
-      -- /bin/sh -c \
-          "
-           export ETCDCTL_API=3
-           export ETCDCTL_ENDPOINTS=$ETCD_HTTP_PROTOCOL://$POD.$ETCD_SVC_SUFFIX:$ETCD_CLIENT_PORT
-           export ETCDCTL_CACERT=/etc/etcd/pki/ca.crt
-           export ETCDCTL_CERT=/etc/etcd/pki/server.pem
-           export ETCDCTL_KEY=/etc/etcd/pki/server-key.pem
-
-           etcdctl --write-out=table endpoint health
-          "
-  done
+# Function to scale the etcd StatefulSet
+scale_etcd() {
+  local replicas=$1
+  kubectl -n "$ETCD_NAMESPACE" scale sts "$ETCD_NAME" --replicas="$replicas"
 }
 
-# Combine etcd svc strings in order to use the
-# ETCD_INITIAL_CLUSTER var during restore step
-etcdInitialCluster
+# Function to wait for the deletion of etcd pods
+wait_for_pod_deletion() {
+  kubectl wait --for=delete pods -n "$ETCD_NAMESPACE" --selector=app.kubernetes.io/instance="$ETCD_NAME" --timeout=300s
+}
 
-# Download desired snapshot from choosen URL locally
-etcdSnapshotDownload
+# Function to wait for the completion of a restore job
+wait_for_job_completion() {
+  local index=$1
+  kubectl wait --for=condition=complete job/$ETCD_NAME-restore-job-${index} -n "$ETCD_NAMESPACE" --timeout=300s
+}
 
-# Upload locally downloaded snapshot
-# to pods and restore it
-etcdSnapshotRestore
+# Main script to restore etcd from a snapshot
+main() {
 
-# Scale the etcd cluster to 0 so I can manipulate member folders in peace
-kubectl scale sts $ETCD_NAME --replicas 0 -n $ETCD_NAMESPACE &&\
-  sleep 10
+  # Scale down the etcd StatefulSet to zero replicas
+  scale_etcd 0
+  # Wait for the etcd pods to be deleted
+  wait_for_pod_deletion
 
-# Let's make sure that etcd is stopped
-kubectl get pods -n $ETCD_NAMESPACE -l app.kubernetes.io/instance=$ETCD_NAME
+  # Create and apply restore jobs in parallel
+  for i in {0..2}; do
+    create_restore_job ${i} "$ETCD_NAME" "$ETCD_SERVICE" "$ETCD_NAMESPACE"
+    kubectl apply -f $ETCD_NAME-restore-job-${i}.yaml &
+  done
 
-# Create a "shell" pod for every kamaji-etcd PVC in order to
-# switch etcd data directories directly from kubectl
-etcdFolderSwitch &&\
-  sleep 10
+  # Wait for all background jobs to complete
+  wait
 
-# Re-Scale Up the etcd cluster to the original replicas
-kubectl scale sts $ETCD_NAME --replicas $ETCD_PODS_COUNT -n $ETCD_NAMESPACE &&\
-  sleep 10
+  # Wait for each restore job to complete
+  for i in {0..2}; do
+    wait_for_job_completion ${i}
+  done
 
-# Let's make sure that etcd is Running as expected
-etcdHealth
+  # Scale the etcd StatefulSet back to three replicas
+  scale_etcd 3
+}
+
+# Execute the main script
+main
