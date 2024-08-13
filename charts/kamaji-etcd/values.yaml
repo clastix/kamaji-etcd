@@ -79,7 +79,7 @@ persistentVolumeClaim:
 # -- Enable storage defragmentation 
 defragmentation:
   # -- The job scheduled maintenance time for defrag (empty to disable)
-  schedule: "*/15 * * * *" # https://crontab.guru/
+  schedule: "0 0 * * *"  # Default cron schedule (daily at midnight), see https://crontab.guru/
 
 # -- Labels to add to all etcd pods
 podLabels:
