@@ -1,18 +1,16 @@
-# Backup and Restore with Velero
+# Disaster Recovery with Velero
 
-A `kamaji-etcd` is just a regular set of stateful pods scheduled on top of the admin cluster; as such, you can take advantage of the same backup and restore methods that you would use to maintain the standard workload.
+A `kamaji-etcd` is just a regular set of stateful workloads running in the Kamaji Management Cluster. As such, you can take advantage of the same methods that you would use to maintain other stateful workloads.
 
-This guide will assist you in how to backup and restore datastore resources on the admin cluster using [Velero](https://tanzu.vmware.com/developer/guides/what-is-velero/).
+This guide will assist you in how operate backup and restore a `kamaji-etcd` setup using [Velero](https://tanzu.vmware.com/developer/guides/what-is-velero/).
 
 ## Prerequisites
 
 Before proceeding with the next steps, we assume that the following prerequisites are met:
 
-- Working admin cluster
-- Working datastore resource
-- Velero binary installed on the operator VM
-- Velero installed on the admin cluster
-- Configured backup location (e.g. S3) for velero
+- Velero command line installed on your workstation
+- Velero installed on the Management Cluster
+- Configured a backup location for Velero
 
 >NOTE:
 Velero supports backing up and restoring Kubernetes volumes attached to pods from the file system of the volumes through the [FSB](https://velero.io/docs/v1.10/file-system-backup/) feature; to use it, make sure the `--use-node-agent` option is passed when installing Velero.
@@ -22,7 +20,7 @@ However, `hostPath` volumes are not supported, so verify that the `kamaji-etcd` 
 
 This example shows how to backup and restore a `kamaji-etcd` datastore called `dedicated` and related resources using the `--include-namespaces` tag. Assume the datastore is deployed into a namespace called `dedicated`.
 
-Because `kamaji-etcd` datastore is a stateful app, you need to add annotations for the stateful pods with the volume name as the default [opt-in](https://velero.io/docs/v1.10/file-system-backup/#using-opt-in-pod-volume-backup) approach used by Velero:
+Because `kamaji-etcd` datastore is a stateful workload, you need to add annotations for the stateful pods with the volume name as the default [opt-in](https://velero.io/docs/v1.10/file-system-backup/#using-opt-in-pod-volume-backup) approach used by Velero:
 
 ```
 kubectl -n dedicated annotate pods dedicated-0 dedicated-1 dedicated-2  backup.velero.io/backup-volumes=data
@@ -52,8 +50,7 @@ velero backup describe kamaji-etcd-dedicated-backup
 ```
 
 ## Restore step
-
-We assume that the restore takes place on the same cluster from which you backed up. In case of disaster recovery, make sure that the Storage Class installed on the target cluster match the backup ones, or change the Storage Class [during restore](https://velero.io/docs/main/restore-reference/#changing-pvpvc-storage-classes).
+In case of disaster recovery to a new Kamaji Management Cluster, make sure that the Storage Class installed on the target cluster matches the source cluster, or change the Storage Class [during restore](https://velero.io/docs/main/restore-reference/#changing-pvpvc-storage-classes).
 
 To exercise the restore, delete any previous instance of the datastore:
 
@@ -101,3 +98,5 @@ dedicated     data-dedicated-1   Bound    pvc-1e9f77eb-89f3-4256-9508-c18b71fca7
 dedicated     data-dedicated-2   Bound    pvc-957c4802-1e7c-4f37-ac01-b89ad1fa9fdb   10Gi       RWO            local-path     6m
 [...]
 ```
+
+Before to implement the Disaster Recovery process, make sure to consult the Velero official [documentation](https://velero.io/docs).
