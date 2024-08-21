@@ -1,7 +1,8 @@
 # Monitoring kamaji-etcd
-Monitoring `etcd` properly is of vital importance for a Kubernetes cluster. If the `etcd` quorum is lost, and the `etcd` consequently cluster fails. Big latencies between the `etcd` nodes, disk performance issues, or high throughput are some of the common root causes of availability problems with `etcd`.
 
-The container running `etcd` exposes metrics on the `/metrics` endpoint: 
+Monitoring `etcd` is critically important for maintaining the health of a Kubernetes cluster. Loss of the `etcd` quorum can lead to cluster failure. Common issues, such as high latency between `etcd` nodes, disk performance problems, or excessive throughput, often lead to availability issues with `etcd`.
+
+The container running `etcd` exposes metrics on the `/metrics` endpoint, which can be monitored for insights:
 
 ```yaml
 spec:
@@ -15,10 +16,11 @@ spec:
 ...
 ```
 
-These metrics can be scraped with Prometheus and used for monitoring and debugging.
+These metrics can be collected by Prometheus and used for both monitoring and debugging purposes.
 
-## Prometheus
-To start monitoring `kamaji-etcd`, first install a Prometheus stack:
+## Setting up Prometheus
+
+To begin monitoring `kamaji-etcd`, install the Prometheus stack using Helm:
 
 ```sh
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -29,7 +31,7 @@ helm install kube-prometheus bitnami/kube-prometheus \
     --create-namespace
 ```
 
-The `kamaji-etcd` Helm Chart optionally provides a ServiceMonitor to instrument Prometheus scraping `etcd` metrics:
+The `kamaji-etcd` Helm chart includes an optional `ServiceMonitor` for Prometheus, enabling it to scrape `etcd` metrics:
 
 ```sh
 helm -n kamaji-etcd upgrade kamaji-etcd clastix/kamaji-etcd \
@@ -40,67 +42,75 @@ helm -n kamaji-etcd upgrade kamaji-etcd clastix/kamaji-etcd \
     --set serviceMonitor.namespace=monitoring-system
 ```
 
-## Metrics
-Following, you will find a summary of the key `etcd` metrics. These will give you visibility on the health of the cluster. A complete list of `etcd` metrics can be found [here](https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt).
+## Key Metrics to Monitor
 
-> The `etcd` does not persist its metrics: if the process restarts, the metrics will be reset.
+Here’s a summary of important `etcd` metrics that help monitor cluster health. A full list of metrics is available [here](https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt).
 
-### Active instances
-Count how many `etcd` instances are active in your cluster:
+> Note: `etcd` metrics are not persisted across restarts. If the process restarts, the metrics will reset.
 
-```
+### Active Instances
+
+To count the number of active `etcd` instances in your cluster:
+
+```sh
 count(etcd_cluster_version)
 ```
 
 ### Active Leader
-This metric indicates whether the `etcd` instances have a leader or not. Count how many have a leader:
 
-```
+This metric shows whether the `etcd` instances have a leader. To count how many instances have a leader:
+
+```sh
 count(etcd_server_has_leader)
 ```
 
-Check the leader changes within the last hour. If this number grows over time, it may similarly indicate performance or network problems.
+To check leader changes over the last hour (growing numbers could indicate performance or network issues):
 
-```
+```sh
 max(increase(etcd_server_leader_changes_seen_total[60m]))
 ```
 
 ### Raft Consensus Proposals
-A Raft consensus proposal is a request, like a write request to add a new configuration or track a new state. It can be a change in a configuration, like a ConfigMap or any other Kubernetes object. This metric should increase over time, as it indicates the cluster is healthy and committing changes.
 
-It is important to monitor this metric across all the `etcd` instances since a large consistent lag between a member and its leader may indicate the node is unhealthy or having performance issues:
+A Raft consensus proposal represents a request, such as a write request to update cluster state. This metric should increase over time as the cluster commits changes.
 
-```
+Monitor committed proposals across all `etcd` instances to detect potential performance issues:
+
+```sh
 etcd_server_proposals_committed_total
 ```
 
-A high number or pending requests over time may indicate there is a high load or that the `etcd` member cannot commit changes:
+If pending requests are high over time, this may indicate either heavy load or an inability to commit changes:
 
-```
+```sh
 etcd_server_proposals_pending
 ```
 
-Failures with requests are basically due to a leader election process or a downtime caused by loss of quorum. Count how many proposals failed within the last hour:
+Failures in requests often arise from leader election processes or quorum loss. Count the number of failed proposals in the last hour:
 
-```
+```sh
 max(rate(etcd_server_proposals_failed_total[60m]))
 ```
 
 ### Disk Metrics
-High latency in disk writes may indicate disk issues, and may cause a high latency on `etcd` requests or even make the cluster unstable or unavailable. To know if the latency of commits are good enough, get the time latency in which 99% of requests are covered and you visualize it in a graph: 
 
-```
+High disk write latency can signal disk issues and affect `etcd` stability. To monitor disk performance, visualize the time taken to commit 99% of requests:
+
+```sh
 histogram_quantile(0.99, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket{job=~"etcd"}[5m])) by (le,instance))
 ```
 
 ### Network Metrics
-Measure the Round Trip Time latency to replicate a request between etcd members. A high latency or latency growing over time may indicate issues in the network, causing serious trouble and even losing quorum.
 
-```
+Monitor network latency by measuring the round trip time (RTT) to replicate a request between `etcd` members. High or increasing RTT can signal network issues that may lead to quorum loss:
+
+```sh
 histogram_quantile(0.99, sum(rate(etcd_network_peer_round_trip_time_seconds_bucket[5m])) by (le,instance))
 ```
 
-This value should not exceed 50ms (0.050s).
+This value should remain below 50ms (0.050s).
 
-## Grafana
-Metrics scraped from `kamaji-etcd` can be visualised with Grafana. Install Grafana and upload the dashboard [here](../monitoring/grafana-dashboard.json).
+## Visualizing with Grafana
+
+Metrics scraped from `kamaji-etcd` can be visualized with Grafana. Install Grafana and import the dashboard from [here](../monitoring/grafana-dashboard.json).
+
