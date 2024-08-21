@@ -29,7 +29,7 @@ spec:
     relabelings: {{- toYaml . | nindent 6 }}
     {{- end }}
   {{- end }}  
-  jobLabel: app.kubernetes.io/name
+  jobLabel: app.kubernetes.io/instance
   {{- with .Values.serviceMonitor.targetLabels }}
   targetLabels: {{- toYaml . | nindent 4 }}
   {{- end }}
