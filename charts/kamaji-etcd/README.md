@@ -94,6 +94,7 @@ Here the values you can override:
 | serviceAccount.name | string | `""` | Define the ServiceAccount name to use during the setup and provision of the etcd backing storage (default: "") |
 | serviceMonitor.annotations | object | `{}` | Assign additional Annotations |
 | serviceMonitor.enabled | bool | `false` | Enable ServiceMonitor for Prometheus |
+| serviceMonitor.endpoint | object | `{"interval":"15s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":""}` | ServiceAccount for scraping metrics from etcd serviceAccount:   # -- ServiceAccount name   name: prometheus   # -- ServiceAccount namespace   namespace: monitoring-system |
 | serviceMonitor.endpoint.interval | string | `"15s"` | Set the scrape interval for the endpoint of the serviceMonitor |
 | serviceMonitor.endpoint.metricRelabelings | list | `[]` | Set metricRelabelings for the endpoint of the serviceMonitor |
 | serviceMonitor.endpoint.relabelings | list | `[]` | Set relabelings for the endpoint of the serviceMonitor |
@@ -101,8 +102,6 @@ Here the values you can override:
 | serviceMonitor.labels | object | `{}` | Assign additional labels according to Prometheus' serviceMonitorSelector matching labels |
 | serviceMonitor.matchLabels | object | `{}` | Change matching labels |
 | serviceMonitor.namespace | string | `""` | Install the ServiceMonitor into a different Namespace, as the monitoring stack one (default: the release one) |
-| serviceMonitor.serviceAccount.name | string | `"etcd"` | ServiceAccount for Metrics RBAC |
-| serviceMonitor.serviceAccount.namespace | string | `"etcd-system"` | ServiceAccount Namespace for Metrics RBAC |
 | serviceMonitor.targetLabels | list | `[]` | Set targetLabels for the serviceMonitor |
 | snapshotCount | string | `"10000"` | Number of committed transactions to trigger a snapshot to disk. |
 | tolerations | list | `[]` | Kubernetes node taints that the etcd pods would tolerate |
