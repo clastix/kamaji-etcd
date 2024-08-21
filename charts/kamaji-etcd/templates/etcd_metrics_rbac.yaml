@@ -41,6 +41,6 @@ roleRef:
   name: {{ include "etcd.fullname" . }}-metrics-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.serviceMonitor.serviceAccount.name }}
+  name: {{ .Values.serviceMonitor.serviceAccount.name | default (include "etcd.serviceAccountName" .) }}
   namespace: {{ .Values.serviceMonitor.serviceAccount.namespace | default .Release.Namespace }}
 {{- end }}
