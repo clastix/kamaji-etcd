@@ -44,7 +44,9 @@ annotations:
   artifacthub.io/operator: "true"
   artifacthub.io/operatorCapabilities: "full lifecycle"
   artifacthub.io/changes: |
-    - chore(gh): ci for helm-docs
-    - feat: config datastore name
-    - feat: add support for imagePullSecrets
-    - fix: fullnameOverride in values
+    - kind: added
+      description: Configuring DataStore name
+    - kind: added
+      description: Support for imagePullSecrets
+    - kind: fixed
+      description: Missing fullnameOverride in values
