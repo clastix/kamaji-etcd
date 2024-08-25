@@ -15,7 +15,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.7.0
+version: 0.8.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -42,11 +42,21 @@ annotations:
     - name: support
       url: https://clastix.io/support
   artifacthub.io/operator: "true"
-  artifacthub.io/operatorCapabilities: "full lifecycle"
+  artifacthub.io/operatorCapabilities: "Full Lifecycle"
   artifacthub.io/changes: |
     - kind: added
       description: Configuring DataStore name
     - kind: added
       description: Support for imagePullSecrets
+    - kind: added
+      description: Use external defrag cronjob
+    - kind: added
+      description: Use external backup cronjob
+    - kind: added
+      description: Refactoring of the restore job
     - kind: fixed
-      description: Missing fullnameOverride in values
+      description: Missing release fullnameOverride
+    - kind: fixed
+      description: Job selector for metrics scraping
+    - kind: fixed
+      description: Service Account for metrics scraping
