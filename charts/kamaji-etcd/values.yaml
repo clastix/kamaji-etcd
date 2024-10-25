@@ -99,10 +99,10 @@ resources:
 nodeSelector:
   kubernetes.io/os: linux
 
-# -- Kubernetes node taints that the etcd pods would tolerate
+# -- Kubernetes node taints that the pods (jobs and etcd) would tolerate
 tolerations: []
 
-# -- Kubernetes affinity rules to apply to etcd controller pods
+# -- Kubernetes affinity rules to apply to pods (jobs and etcd)
 affinity: {}
 
 # -- Kubernetes topology spread constraints to apply to etcd controller pods

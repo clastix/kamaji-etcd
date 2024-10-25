@@ -55,7 +55,7 @@ Here the values you can override:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` | Kubernetes affinity rules to apply to etcd controller pods |
+| affinity | object | `{}` | Kubernetes affinity rules to apply to pods (jobs and etcd) |
 | alerts.annotations | object | `{}` | Assign additional Annotations |
 | alerts.enabled | bool | `false` | Enable alerts for Alertmanager |
 | alerts.labels | object | `{}` | Assign additional labels according to Prometheus' Alerts matching labels |
@@ -104,7 +104,7 @@ Here the values you can override:
 | serviceMonitor.namespace | string | `""` | Install the ServiceMonitor into a different Namespace, as the monitoring stack one (default: the release one) |
 | serviceMonitor.targetLabels | list | `[]` | Set targetLabels for the serviceMonitor |
 | snapshotCount | string | `"10000"` | Number of committed transactions to trigger a snapshot to disk. |
-| tolerations | list | `[]` | Kubernetes node taints that the etcd pods would tolerate |
+| tolerations | list | `[]` | Kubernetes node taints that the pods (jobs and etcd) would tolerate |
 | topologySpreadConstraints | list | `[]` | Kubernetes topology spread constraints to apply to etcd controller pods |
 
 ## Maintainers
