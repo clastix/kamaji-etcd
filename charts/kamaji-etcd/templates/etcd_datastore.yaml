@@ -3,6 +3,10 @@ apiVersion: kamaji.clastix.io/v1alpha1
 kind: DataStore
 metadata:
   name: {{ .Values.datastore.name | default (include "etcd.fullname" .) }}
+  {{- if .Values.datastore.annotations }}
+  annotations:
+      {{- toYaml .Values.datastore.annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
 spec:

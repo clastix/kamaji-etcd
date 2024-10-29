@@ -119,6 +119,9 @@ datastore:
   enabled: false
   # -- Name of Kamaji datastore, set to fully qualified etcd name when null or not provided
   name: ""
+  # -- Assign additional Annotations to the datastore
+  annotations: {}
+  #  helm.sh/resource-policy: keep
 
 serviceMonitor:
   # -- Enable ServiceMonitor for Prometheus

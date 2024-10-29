@@ -65,6 +65,7 @@ Here the values you can override:
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
 | clientPort | int | `2379` | The client request port. |
 | clusterDomain | string | `"cluster.local"` | Domain of the Kubernetes cluster. |
+| datastore.annotations | object | `{}` | Assign additional Annotations to the datastore |
 | datastore.enabled | bool | `false` | Create a datastore custom resource for Kamaji |
 | datastore.name | string | `""` | Name of Kamaji datastore, set to fully qualified etcd name when null or not provided |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
