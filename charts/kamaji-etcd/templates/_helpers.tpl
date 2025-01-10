@@ -105,7 +105,7 @@ Name of the etcd role
 Name of the etcd role binding
 */}}
 {{- define "etcd.roleBindingName" }}
-{{- printf "%s-gen-certs-rolebiding" (include "etcd.fullname" .) }}
+{{- printf "%s-gen-certs-rolebinding" (include "etcd.fullname" .) }}
 {{- end }}
 
 {{/*
