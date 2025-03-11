@@ -2,13 +2,13 @@
 
 If your `etcd` starts to behave slow or logs start showing messages like this: `"msg":"leader failed to send out heartbeat on time; took too long, leader is overloaded likely from slow disk"`, your storage might be too slow for `etcd` or the server might be doing too much for `etcd` to operate properly:
 
-What can you do to the verify the performance of your storage. The biggest factor is the storage latency. If it is not well below `10ms` in the `99th` percentile, you will see warnings in the `etcd` logs. We can test this with a tool called `fio` as stated below. Credits to [Matteo Olivi](https://github.com/matteoolivi) and [Mike Spreitzer](https://github.com/MikeSpreitzer) for their original [paper](https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd) at IBM.
+What can you do to the verify the performance of your storage. The biggest factor is the storage latency. If it is not well below `10ms` in the `99th` percentile, you will see warnings in the `etcd` logs. We can test this with a tool called **FIO** (Flexible I/O Tester) as stated below. Credits to [Matteo Olivi](https://github.com/matteoolivi) and [Mike Spreitzer](https://github.com/MikeSpreitzer) for their original [paper](https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd) at IBM.
 
 ## Testing etcd performance
-Download and install the latest version of `fio`:
+Assuming Ubuntu OS, install `fio`:
 
 ```
-curl -LO https://github.com/rancherlabs/support-tools/raw/master/instant-fio-master/instant-fio-master.sh | bash -
+sudo apt install -y fio
 ```
 
 To test the storage, create a directory on the device the `etcd` is using and then run the `fio` command:
