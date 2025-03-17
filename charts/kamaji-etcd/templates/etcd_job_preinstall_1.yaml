@@ -58,10 +58,11 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-      {{- with .Values.tolerations }}
+      nodeSelector: {{- toYaml .Values.jobs.nodeSelector | nindent 8 }}
+      {{- with .Values.jobs.tolerations }}
       tolerations: {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.jobs.affinity }}
       affinity: {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:

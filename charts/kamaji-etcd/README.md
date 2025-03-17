@@ -55,7 +55,7 @@ Here the values you can override:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` | Kubernetes affinity rules to apply to pods (jobs and etcd) |
+| affinity | object | `{}` | Kubernetes affinity rules to apply to etcd pods |
 | alerts.annotations | object | `{}` | Assign additional Annotations |
 | alerts.enabled | bool | `false` | Enable alerts for Alertmanager |
 | alerts.labels | object | `{}` | Assign additional labels according to Prometheus' Alerts matching labels |
@@ -74,6 +74,9 @@ Here the values you can override:
 | image.repository | string | `"quay.io/coreos/etcd"` | Install image from specific repo  |
 | image.tag | string | `""` | Install image with specific tag, overwrite the tag in the chart |
 | imagePullSecrets | list | `[]` |  |
+| jobs.affinity | object | `{}` | Kubernetes affinity rules to apply to ancillary jobs |
+| jobs.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules for ancillary jobs |
+| jobs.tolerations | list | `[]` | Kubernetes node taints that the ancillary jobs would tolerate |
 | livenessProbe | object | `{}` | The livenessProbe for the etcd container |
 | metricsPort | int | `2381` | The port where etcd exposes metrics. |
 | nameOverride | string | `""` |  |
@@ -105,8 +108,8 @@ Here the values you can override:
 | serviceMonitor.namespace | string | `""` | Install the ServiceMonitor into a different Namespace, as the monitoring stack one (default: the release one) |
 | serviceMonitor.targetLabels | list | `[]` | Set targetLabels for the serviceMonitor |
 | snapshotCount | string | `"10000"` | Number of committed transactions to trigger a snapshot to disk. |
-| tolerations | list | `[]` | Kubernetes node taints that the pods (jobs and etcd) would tolerate |
-| topologySpreadConstraints | list | `[]` | Kubernetes topology spread constraints to apply to etcd controller pods |
+| tolerations | list | `[]` | Kubernetes node taints that the etcd pods would tolerate |
+| topologySpreadConstraints | list | `[]` | Kubernetes topology spread constraints to apply to etcd pods |
 
 ## Maintainers
 
