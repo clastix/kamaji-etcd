@@ -16,6 +16,7 @@ spec:
     spec:
       serviceAccountName: {{ include "etcd.serviceAccountName" . }}
       restartPolicy: Never
+      nodeSelector: {{- toYaml .Values.jobs.nodeSelector | nindent 8 }}
       containers:
         - name: kubectl
           image: {{ printf "clastix/kubectl:%s" (include "etcd.jobsTagKubeVersion" .) }}
@@ -27,9 +28,9 @@ spec:
             - --ignore-not-found=true
             - {{ include "etcd.caSecretName" . }}
             - {{ include "etcd.clientSecretName" . }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.jobs.tolerations }}
       tolerations: {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.jobs.affinity }}
       affinity: {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -99,13 +99,13 @@ resources:
 nodeSelector:
   kubernetes.io/os: linux
 
-# -- Kubernetes node taints that the pods (jobs and etcd) would tolerate
+# -- Kubernetes node taints that the etcd pods would tolerate
 tolerations: []
 
-# -- Kubernetes affinity rules to apply to pods (jobs and etcd)
+# -- Kubernetes affinity rules to apply to etcd pods
 affinity: {}
 
-# -- Kubernetes topology spread constraints to apply to etcd controller pods
+# -- Kubernetes topology spread constraints to apply to etcd pods
 topologySpreadConstraints: []
 #- maxSkew: 1
 #  topologyKey: topology.kubernetes.io/zone
@@ -186,3 +186,13 @@ alerts:
   #    labels:
   #      severity: critical
   #
+
+jobs:
+  # -- Kubernetes node selector rules for ancillary jobs
+  nodeSelector:
+    kubernetes.io/os: linux
+  # -- Kubernetes node taints that the ancillary jobs would tolerate
+  tolerations: []
+  # -- Kubernetes affinity rules to apply to ancillary jobs
+  affinity: {}
+  
