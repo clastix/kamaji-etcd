@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.9.4](https://img.shields.io/badge/Version-0.9.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.6](https://img.shields.io/badge/AppVersion-3.5.6-informational?style=flat-square)
+![Version: 0.9.4](https://img.shields.io/badge/Version-0.9.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.16](https://img.shields.io/badge/AppVersion-3.5.16-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
@@ -75,6 +75,7 @@ Here the values you can override:
 | image.tag | string | `""` | Install image with specific tag, overwrite the tag in the chart |
 | imagePullSecrets | list | `[]` |  |
 | jobs.affinity | object | `{}` | Kubernetes affinity rules to apply to ancillary jobs |
+| jobs.image | object | `{"pullPolicy":"IfNotPresent","repository":"quay.io/coreos/etcd","tag":"v3.5.6"}` | etcd image to use for ancillary jobs |
 | jobs.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules for ancillary jobs |
 | jobs.tolerations | list | `[]` | Kubernetes node taints that the ancillary jobs would tolerate |
 | livenessProbe | object | `{}` | The livenessProbe for the etcd container |
