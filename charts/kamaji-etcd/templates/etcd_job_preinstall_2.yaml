@@ -51,8 +51,8 @@ spec:
               value: /opt/certs/root-certs/tls.crt
             - name: ETCDCTL_KEY
               value: /opt/certs/root-certs/tls.key
-          image: {{ include "etcd.fullyQualifiedDockerImage" . }}
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.jobs.image.repository }}:{{ .Values.jobs.image.tag }}
+          imagePullPolicy: {{ .Values.jobs.image.pullPolicy }}
           name: etcd-client
           volumeMounts:
             - name: root-certs
