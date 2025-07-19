@@ -3,15 +3,13 @@ kind: Service
 metadata:
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
-  name: {{ include "etcd.serviceName" . }}
+  name: {{ include "client.serviceName" . }}
   namespace: {{ .Release.Namespace }}
 spec:
-  clusterIP: None
+  type: ClusterIP
   ports:
     - port: {{ .Values.clientPort }}
       name: client
-    - port: {{ .Values.peerApiPort }}
-      name: peer
     - port: {{ .Values.metricsPort }}
       name: metrics
   selector:

@@ -58,6 +58,7 @@ data:
 {{- range $count := until (int $.Values.replicas) -}}
         {{ printf "\"%s-%d.%s.%s.svc.%s\"," ( include "etcd.fullname" $outer ) $count (include "etcd.serviceName" $outer) $.Release.Namespace $.Values.clusterDomain }}
 {{- end }}
+        {{ printf "\"%s.%s.svc.%s\"," (include "client.serviceName" .) $.Release.Namespace $.Values.clusterDomain }}
         "etcd-server.{{ .Release.Namespace }}.svc.{{ $.Values.clusterDomain }}",
         "etcd-server.{{ .Release.Namespace }}.svc",
         "etcd-server",

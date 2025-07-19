@@ -128,6 +128,8 @@ datastore:
   enabled: false
   # -- Name of Kamaji datastore, set to fully qualified etcd name when null or not provided
   name: ""
+  # -- Expose the headless service endpoints in the datastore. Set to false to expose with regular service.
+  headless: true # https://github.com/clastix/kamaji/issues/856
   # -- Assign additional Annotations to the datastore
   annotations: {}
   #  helm.sh/resource-policy: keep
