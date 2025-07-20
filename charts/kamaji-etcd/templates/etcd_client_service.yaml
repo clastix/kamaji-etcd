@@ -3,6 +3,7 @@ kind: Service
 metadata:
   labels:
     {{- include "etcd.labels" . | nindent 4 }}
+    prometheus.io/metrics: "true"
   name: {{ include "client.serviceName" . }}
   namespace: {{ .Release.Namespace }}
 spec:
