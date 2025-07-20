@@ -67,6 +67,7 @@ Here the values you can override:
 | clusterDomain | string | `"cluster.local"` | Domain of the Kubernetes cluster. |
 | datastore.annotations | object | `{}` | Assign additional Annotations to the datastore |
 | datastore.enabled | bool | `true` | Create a datastore custom resource for Kamaji |
+| datastore.headless | bool | `true` | Expose the headless service endpoints in the datastore. Set to false to expose with regular service. |
 | datastore.name | string | `""` | Name of Kamaji datastore, set to fully qualified etcd name when null or not provided |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
 | fullnameOverride | string | `""` |  |

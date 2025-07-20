@@ -38,7 +38,8 @@ spec:
     {{- if .Values.serviceMonitor.matchLabels }}
       {{- toYaml .Values.serviceMonitor.matchLabels | nindent 6 }}
     {{- else }}
-      {{- include "etcd.labels" . | nindent 6 }}
+      prometheus.io/metrics: "true"
+      {{- include "etcd.selectorLabels" . | nindent 6 }}
     {{- end }}
   namespaceSelector:
     matchNames:

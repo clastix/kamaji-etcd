@@ -25,6 +25,7 @@ appVersion: "3.5.17"
 
 home: https://github.com/clastix/kamaji-etcd
 sources: ["https://github.com/clastix/kamaji-etcd"]
+icon: https://github.com/clastix/kamaji/raw/master/assets/logo-colored.png
 kubeVersion: ">=1.22.0-0"
 maintainers:
   - email: adriano@clastix.io
