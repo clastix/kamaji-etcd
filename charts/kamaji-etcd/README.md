@@ -100,14 +100,16 @@ Here the values you can override:
 | serviceAccount.name | string | `""` | Define the ServiceAccount name to use during the setup and provision of the etcd backing storage (default: "") |
 | serviceMonitor.annotations | object | `{}` | Assign additional Annotations |
 | serviceMonitor.enabled | bool | `false` | Enable ServiceMonitor for Prometheus |
-| serviceMonitor.endpoint | object | `{"interval":"15s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":""}` | ServiceAccount for scraping metrics from etcd serviceAccount:   # -- ServiceAccount name   name: prometheus   # -- ServiceAccount namespace   namespace: monitoring-system |
 | serviceMonitor.endpoint.interval | string | `"15s"` | Set the scrape interval for the endpoint of the serviceMonitor |
 | serviceMonitor.endpoint.metricRelabelings | list | `[]` | Set metricRelabelings for the endpoint of the serviceMonitor |
 | serviceMonitor.endpoint.relabelings | list | `[]` | Set relabelings for the endpoint of the serviceMonitor |
 | serviceMonitor.endpoint.scrapeTimeout | string | `""` | Set the scrape timeout for the endpoint of the serviceMonitor |
-| serviceMonitor.labels | object | `{}` | Assign additional labels according to Prometheus' serviceMonitorSelector matching labels |
-| serviceMonitor.matchLabels | object | `{}` | Change matching labels |
-| serviceMonitor.namespace | string | `""` | Install the ServiceMonitor into a different Namespace, as the monitoring stack one (default: the release one) |
+| serviceMonitor.labels | object | `{"release":"kube-prometheus-stack"}` | Assign additional labels according to Prometheus' serviceMonitorSelector matching labels. By default, it uses the kube-prometheus-stack one. |
+| serviceMonitor.matchLabels | object | `{}` | Change matching labels. By default, it uses client service labels. |
+| serviceMonitor.namespace | string | `""` | Install the ServiceMonitor into a different namespace than release one. |
+| serviceMonitor.serviceAccount | object | `{"name":"kube-prometheus-stack-prometheus","namespace":"monitoring-system"}` | ServiceAccount for scraping metrics from etcd. By defult, it uses the kube-prometheus-stack one. |
+| serviceMonitor.serviceAccount.name | string | `"kube-prometheus-stack-prometheus"` | ServiceAccount name |
+| serviceMonitor.serviceAccount.namespace | string | `"monitoring-system"` | ServiceAccount namespace |
 | serviceMonitor.targetLabels | list | `[]` | Set targetLabels for the serviceMonitor |
 | snapshotCount | string | `"10000"` | Number of committed transactions to trigger a snapshot to disk. |
 | tolerations | list | `[]` | Kubernetes node taints that the etcd pods would tolerate |

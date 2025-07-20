@@ -16,31 +16,59 @@ spec:
 ...
 ```
 
-These metrics can be collected by Prometheus and used for both monitoring and debugging purposes.
+The `etcd` metrics are exposed on port `2381` by default, and can be accessed via the `/metrics` endpoint of kamaji-etcd-client service:
 
-## Setting up Prometheus
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    prometheus.io/metrics: "true"
+  name: kamaji-etcd-client
+spec:
+  ports:
+  - name: client
+    port: 2379
+    protocol: TCP
+    targetPort: 2379
+  - name: metrics
+    port: 2381
+    protocol: TCP
+    targetPort: 2381
+  selector:
+    app.kubernetes.io/instance: kamaji-etcd
+```
 
-To begin monitoring `kamaji-etcd`, install the Prometheus stack using Helm:
+These metrics can be collected by Prometheus Operator and used for both monitoring and debugging purposes.
+
+## Setting up Prometheus Operator
+
+To begin monitoring `kamaji-etcd`, install the Prometheus Operator stack using Helm:
 
 ```sh
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add kube-prometheus-stack https://prometheus-community.github.io/helm-charts
 helm repo update
-helm install kube-prometheus bitnami/kube-prometheus \
+helm install kube-prometheus kube-prometheus-stack/kube-prometheus-stack \
     --set prometheus.persistence.enabled=true \
     --namespace monitoring-system \
     --create-namespace
 ```
 
-The `kamaji-etcd` Helm chart includes an optional `ServiceMonitor` for Prometheus, enabling it to scrape `etcd` metrics:
+The `kamaji-etcd` Helm chart includes an optional `ServiceMonitor` for Prometheus Operator, enabling it to scrape `etcd` metrics:
 
 ```sh
 helm -n kamaji-etcd upgrade kamaji-etcd clastix/kamaji-etcd \
     --set datastore.enabled=true \
     --set datastore.name=default \
-    --set fullnameOverride=default \
-    --set serviceMonitor.enabled=true \
-    --set serviceMonitor.namespace=monitoring-system
+    --set fullnameOverride=kamaji-etcd \
+    --set serviceMonitor.enabled=true
 ```
+
+By default such `ServiceMonitor` is installed in the same namespace as the `kamaji-etcd` release. If you want to install it in a different namespace, you can set the `serviceMonitor.namespace` value to the desired namespace.
+
+By default, the `ServiceMonitor` is configured to scrape metrics every 15 seconds. You can adjust this interval by setting the `serviceMonitor.endpoint.interval` value.
+
+By default, the `ServiceMonitor` uses the ServiceAccount `kube-prometheus-stack-prometheus` in the `monitoring-system` namespace to scrape metrics from etcd. If you want to use a different ServiceAccount, you can set the `serviceMonitor.serviceAccount.name` and value `serviceMonitor.serviceAccount.namespace` to the desired values.
 
 ## Key Metrics to Monitor
 
@@ -97,7 +125,7 @@ max(rate(etcd_server_proposals_failed_total[60m]))
 High disk write latency can signal disk issues and affect `etcd` stability. To monitor disk performance, visualize the time taken to commit 99% of requests:
 
 ```sh
-histogram_quantile(0.99, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket{job=~"etcd"}[5m])) by (le,instance))
+histogram_quantile(0.99, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket{job=~"kamaji-etcd"}[5m])) by (le,instance))
 ```
 
 ### Network Metrics
