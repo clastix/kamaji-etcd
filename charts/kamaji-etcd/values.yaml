@@ -125,7 +125,7 @@ topologySpreadConstraints: []
 
 datastore:
   # -- Create a datastore custom resource for Kamaji
-  enabled: false
+  enabled: true
   # -- Name of Kamaji datastore, set to fully qualified etcd name when null or not provided
   name: ""
   # -- Expose the headless service endpoints in the datastore. Set to false to expose with regular service.
