@@ -12,7 +12,11 @@ metadata:
 spec:
   driver: etcd
   endpoints:
-  {{- include "etcd.endpointsYAML" . | nindent 4 }}
+  {{- if or (not (hasKey .Values.datastore "headless")) .Values.datastore.headless }}
+    {{- include "etcd.endpointsYAML" . | nindent 4 }}
+  {{- else }}
+    {{- include "client.endpointsYAML" . | nindent 4 }}
+  {{- end }}
   tlsConfig:
     certificateAuthority:
       certificate:

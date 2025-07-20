@@ -43,6 +43,13 @@ Create the name of the Service to use
 {{- end }}
 
 {{/*
+Create the name of the client Service to use
+*/}}
+{{- define "client.serviceName" -}}
+{{- printf "%s-client" (include "etcd.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "etcd.labels" -}}
@@ -157,8 +164,8 @@ Space separated list of etcd cluster endpoints.
 {{- end }}
 
 {{/*
-Create the minio-client fully-qualified Docker image to use
+Client cluster endpoints.
 */}}
-{{- define "minio-client.fullyQualifiedDockerImage" -}}
-{{- printf "%s:%s" .Values.backup.s3.image.repository .Values.backup.s3.image.tag -}}
+{{- define "client.endpointsYAML" }}
+{{ printf "- %s.%s.svc.%s:%d\n" ( include "client.serviceName" .) $.Release.Namespace $.Values.clusterDomain (int $.Values.clientPort) }}
 {{- end }}
