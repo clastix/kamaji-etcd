@@ -34,15 +34,15 @@ clientPort: 2379
 metricsPort: 2381
 
 # -- The livenessProbe for the etcd container
-livenessProbe: {}
-#  failureThreshold: 8
-#  httpGet:
-#    path: /health?serializable=true
-#    port: 2381
-#    scheme: HTTP
-#  initialDelaySeconds: 10
-#  periodSeconds: 10
-#  timeoutSeconds: 15
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /livez
+    port: 2381
+    scheme: HTTP
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 15
 
 # -- Domain of the Kubernetes cluster.
 clusterDomain: "cluster.local"

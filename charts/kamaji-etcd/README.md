@@ -79,7 +79,7 @@ Here the values you can override:
 | jobs.image | object | `{"pullPolicy":"IfNotPresent","repository":"quay.io/coreos/etcd","tag":"v3.5.6"}` | etcd image to use for ancillary jobs |
 | jobs.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules for ancillary jobs |
 | jobs.tolerations | list | `[]` | Kubernetes node taints that the ancillary jobs would tolerate |
-| livenessProbe | object | `{}` | The livenessProbe for the etcd container |
+| livenessProbe | object | `{"failureThreshold":3,"httpGet":{"path":"/livez","port":2381,"scheme":"HTTP"},"initialDelaySeconds":10,"periodSeconds":10,"timeoutSeconds":15}` | The livenessProbe for the etcd container |
 | metricsPort | int | `2381` | The port where etcd exposes metrics. |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules to schedule etcd |
