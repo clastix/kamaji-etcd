@@ -137,22 +137,23 @@ datastore:
 serviceMonitor:
   # -- Enable ServiceMonitor for Prometheus
   enabled: false
-  # -- Install the ServiceMonitor into a different Namespace, as the monitoring stack one (default: the release one)
+  # -- Install the ServiceMonitor into a different namespace than release one.
   namespace: ''
-  # -- Assign additional labels according to Prometheus' serviceMonitorSelector matching labels
-  labels: {}
+  # -- Assign additional labels according to Prometheus' serviceMonitorSelector matching labels. By default, it uses the kube-prometheus-stack one.
+  labels:
+    release: kube-prometheus-stack
   # -- Assign additional Annotations
   annotations: {}
-  # -- Change matching labels
+  # -- Change matching labels. By default, it uses client service labels.
   matchLabels: {}
   # -- Set targetLabels for the serviceMonitor
   targetLabels: []
-  # -- ServiceAccount for scraping metrics from etcd
-  # serviceAccount:
-  #   # -- ServiceAccount name
-  #   name: prometheus
-  #   # -- ServiceAccount namespace
-  #   namespace: monitoring-system
+  # -- ServiceAccount for scraping metrics from etcd. By defult, it uses the kube-prometheus-stack one.
+  serviceAccount:
+    # -- ServiceAccount name
+    name: kube-prometheus-stack-prometheus
+    # -- ServiceAccount namespace
+    namespace: monitoring-system
   endpoint:
     # -- Set the scrape interval for the endpoint of the serviceMonitor
     interval: "15s"
