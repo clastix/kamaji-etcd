@@ -40,25 +40,27 @@ To run the script, use the following command:
 ./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot]
 ```
 
-## Parameters
+### Parameters
 
 - `-e etcd_name`: Name of the etcd StatefulSet (default: `kamaji-etcd`)
-- `-s etcd_service`: Name of the etcd service (default: `kamaji-etcd`)
+- `-s etcd_service`: Name of the etcd headless service (default: `kamaji-etcd`)
 - `-n etcd_namespace`: Namespace of the etcd StatefulSet (default: `kamaji-system`)
 - `-f snapshot`: Snapshot file to restore from (required)
 
-For example:
+### Example:
 
 ```bash
-./restore.sh -e my-etcd -s my-etcd-service -n my-namespace -f snapshot.db
+./restore.sh -e kamaji-etcd -s kamaji-etcd -n kamaji-system -f snapshot.db
 ```
 
-## Notes
+> 🚨 Make sure to use the **headless service** name for the `-s` parameter, which is typically the same as the StatefulSet name.
 
-- Ensure that the snapshot file is accessible and the necessary secret for accessing the storage is configured in the same namespace.
+### Notes
+
+- Ensure that the snapshot file is accessible and the necessary secret `backup-storage-secret` for accessing the storage is configured in the same namespace.
 - The script uses `kubectl` commands, so ensure you have the necessary permissions to perform these operations.
 
-## Debug mode
+### Debug mode
 To run the script in debug mode set the environment variable `DEBUG`:
 
 ``` bash

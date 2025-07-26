@@ -69,7 +69,9 @@ To schedule recurring backups with CronJobs, use the `schedule.sh` script. The s
 ### Usage
 To run the script, use the following command:
 
+``` bash
 ./schedule.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace] [-j schedule]
+``` 
 
 ### Parameters
 
@@ -80,6 +82,7 @@ To run the script, use the following command:
 
 ### Example
 To run the script with custom parameters:
+
 ```bash
 ./schedule.sh -e kamaji-etcd -s kamaji-etcd-client -n kamaji-system -j "14 9 * * 1-5"
 ```
