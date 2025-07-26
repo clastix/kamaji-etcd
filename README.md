@@ -13,8 +13,8 @@ Refer to the [etcd documentation](https://etcd.io/docs/v3.5/op-guide). Following
 
 - [Inspecting the Cluster](docs/inspect.md)
 - [Monitoring](docs/monitoring.md)
-- [Taking Snapshots](docs/snapshot.md)
-- [Recover from Snapshot](docs/snapshot-recovery.md)
+- [Backup](docs/backup.md)
+- [Restore](docs/restore.md)
 - [Rotate Certificates](docs/rotate-certificates.md)
 - [Defragmenting Data](docs/defragmentation.md)
 - [Performance and Optimization](docs/performance-and-optimization.md)
