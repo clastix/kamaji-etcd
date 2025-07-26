@@ -93,7 +93,7 @@ spec:
         - |
             # Remove existing etcd member data and restore from snapshot
             rm -rf /var/run/etcd/member
-            etcdctl snapshot restore /opt/dump/${SNAPSHOT} \
+            etcdutl snapshot restore /opt/dump/${SNAPSHOT} \
             --data-dir /var/run/etcd \
             --name ${etcd_name}-${index} \
             --initial-cluster ${etcd_name}-0=https://${etcd_name}-0.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-1=https://${etcd_name}-1.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-2=https://${etcd_name}-2.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380 \
@@ -151,6 +151,24 @@ wait_for_job_completion() {
   kubectl wait --for=condition=complete job/$ETCD_NAME-restore-job-${index} -n "$ETCD_NAMESPACE" --timeout=300s
 }
 
+# Function to wait for etcd StatefulSet to be ready
+wait_for_etcd_ready() {
+  kubectl wait --for=condition=ready pod -n "$ETCD_NAMESPACE" --selector=app.kubernetes.io/instance="$ETCD_NAME" --timeout=300s
+}
+
+# Function to cleanup restore jobs and manifests
+cleanup_restore_jobs() {
+  echo "Cleaning up restore jobs..."
+  for i in {0..2}; do
+    echo "Deleting job: $ETCD_NAME-restore-job-${i}"
+    kubectl delete job $ETCD_NAME-restore-job-${i} -n "$ETCD_NAMESPACE" --ignore-not-found=true
+
+    echo "Removing manifest file: $ETCD_NAME-restore-job-${i}.yaml"
+    rm -f $ETCD_NAME-restore-job-${i}.yaml
+  done
+  echo "Cleanup completed."
+}
+
 # Main script to restore etcd from a snapshot
 main() {
 
@@ -175,6 +193,12 @@ main() {
 
   # Scale the etcd StatefulSet back to three replicas
   scale_etcd 3
+
+  # Wait for etcd pods to be ready
+  wait_for_etcd_ready
+  # Clean up restore jobs and manifest files
+  cleanup_restore_jobs
+
 }
 
 # Execute the main script
