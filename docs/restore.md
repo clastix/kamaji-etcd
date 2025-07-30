@@ -47,6 +47,12 @@ To run the script, use the following command:
 - `-n etcd_namespace`: Namespace of the etcd StatefulSet (default: `kamaji-system`)
 - `-f snapshot`: Snapshot file to restore from (required)
 
+### Notes
+
+- Ensure that the snapshot file is accessible and the necessary secret `backup-storage-secret` for accessing the storage is configured in the same namespace.
+- The script uses `kubectl` commands, so ensure you have the necessary permissions to perform these operations.
+- The Kubernetes project recommends you should stop all the control plane components before restoring the etcd datastore. [Here](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#restoring-an-etcd-cluster).
+
 ### Example:
 
 ```bash
@@ -54,11 +60,6 @@ To run the script, use the following command:
 ```
 
 > 🚨 Make sure to use the **headless service** name for the `-s` parameter, which is typically the same as the StatefulSet name.
-
-### Notes
-
-- Ensure that the snapshot file is accessible and the necessary secret `backup-storage-secret` for accessing the storage is configured in the same namespace.
-- The script uses `kubectl` commands, so ensure you have the necessary permissions to perform these operations.
 
 ### Debug mode
 To run the script in debug mode set the environment variable `DEBUG`:

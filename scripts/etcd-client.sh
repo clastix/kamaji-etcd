@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Script to create an etcd client pod for inspecting the etcd cluster
+# Script to create an etcd pod for inspecting the etcd cluster
 
 # Default values
 ETCD_NAME="kamaji-etcd"
-ETCD_SERVICE="kamaji-etcd-client"
+ETCD_SERVICE="kamaji-etcd"
 ETCD_NAMESPACE="kamaji-system"
 
 # Parse script parameters
@@ -13,12 +13,12 @@ while getopts "e:s:n:" opt; do
     e ) ETCD_NAME=$OPTARG ;;
     s ) ETCD_SERVICE=$OPTARG ;;
     n ) ETCD_NAMESPACE=$OPTARG ;;
-    \? ) echo "Usage: $0 [-e etcd_name] [-s etcd_clent_service] [-n etcd_namespace]"
+    \? ) echo "Usage: $0 [-e etcd_name] [-s etcd_headless_service] [-n etcd_namespace]"
          exit 1 ;;
   esac
 done
 
-CLIENT_POD_NAME="etcd-client"
+CLIENT_POD_NAME=${ETCD_NAME}-client
 
 # Create the etcd client pod manifest
 cat <<EOF | kubectl apply -f -
@@ -35,23 +35,13 @@ spec:
     - sh
     - -c
     - |
-      echo "etcd client pod is ready. You can now exec into this pod and run etcdctl commands."
-      echo ""
-      echo "Example commands:"
-      echo "  etcdctl member list -w table"
-      echo "  etcdctl endpoint status -w table"
-      echo "  etcdctl endpoint health -w table"
-      echo "  etcdctl get / --prefix --keys-only"
-      echo ""
-      echo "Endpoints: \${ENDPOINTS}"
-      echo ""
       # Keep the pod running
       while true; do sleep 3600; done
     env:
     - name: ENDPOINTS
-      value: "https://${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379"
+      value: "https://${ETCD_NAME}-0.${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379,https://${ETCD_NAME}-1.${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379,https://${ETCD_NAME}-2.${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379"
     - name: ETCDCTL_ENDPOINTS
-      value: "https://${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379"
+      value: "https://${ETCD_NAME}-0.${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379,https://${ETCD_NAME}-1.${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379,https://${ETCD_NAME}-2.${ETCD_SERVICE}.${ETCD_NAMESPACE}.svc.cluster.local:2379"
     - name: ETCDCTL_CACERT
       value: /opt/certs/ca/ca.crt
     - name: ETCDCTL_CERT
@@ -82,7 +72,7 @@ echo ""
 echo "  kubectl exec -it ${CLIENT_POD_NAME} -n ${ETCD_NAMESPACE} -- bash"
 echo ""
 echo "Then run etcdctl commands like:"
-echo "  etcdctl member list"
+echo "  etcdctl member list --write-out=table"
 echo "  etcdctl endpoint status --write-out=table"
-echo "  etcdctl endpoint health"
+echo "  etcdctl endpoint health --write-out=table"
 echo ""
