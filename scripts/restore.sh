@@ -49,7 +49,7 @@ spec:
         - |
           # Set up MinIO client and download the snapshot
           if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-             \$MC cp storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER}/${SNAPSHOT} /opt/dump;
+             \$MC cp "storage/\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/${SNAPSHOT}" /opt/dump;
           else
              exit 1;
           fi
@@ -92,6 +92,7 @@ spec:
         - -c
         - |
             # Remove existing etcd member data and restore from snapshot
+            etcdutl --write-out=table snapshot status /opt/dump/${SNAPSHOT}
             rm -rf /var/run/etcd/member
             etcdutl snapshot restore /opt/dump/${SNAPSHOT} \
             --data-dir /var/run/etcd \
@@ -158,7 +159,7 @@ wait_for_etcd_ready() {
 
 # Function to cleanup restore jobs and manifests
 cleanup_restore_jobs() {
-  echo "Cleaning up restore jobs..."
+  echo "Cleaning up restore jobs if any ..."
   for i in {0..2}; do
     echo "Deleting job: $ETCD_NAME-restore-job-${i}"
     kubectl delete job $ETCD_NAME-restore-job-${i} -n "$ETCD_NAMESPACE" --ignore-not-found=true
@@ -171,6 +172,9 @@ cleanup_restore_jobs() {
 
 # Main script to restore etcd from a snapshot
 main() {
+
+  # Clean up restore jobs and manifest files
+  cleanup_restore_jobs
 
   # Scale down the etcd StatefulSet to zero replicas
   scale_etcd 0
@@ -196,8 +200,6 @@ main() {
 
   # Wait for etcd pods to be ready
   wait_for_etcd_ready
-  # Clean up restore jobs and manifest files
-  cleanup_restore_jobs
 
 }
 

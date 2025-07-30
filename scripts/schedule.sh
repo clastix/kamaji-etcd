@@ -19,24 +19,23 @@ while getopts "e:s:n:j:" opt; do
     s ) ETCD_SERVICE=$OPTARG ;;
     n ) ETCD_NAMESPACE=$OPTARG ;;
     j ) SCHEDULE=$OPTARG ;;
-    \? ) echo "Usage: ./backup.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace] [-j schedule]"
+    \? ) echo "Usage: ./schedule.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace] [-j schedule]"
          exit 1 ;;
   esac
 done
 
 # Function to create the CronJob manifest for backing up etcd
 create_backup_cronjob() {
-  local index=$1
-  local etcd_name=$2
-  local etcd_service=$3
-  local etcd_namespace=$4
-  local schedule=$5  # Add a parameter for the cron schedule
+  local etcd_name=$1
+  local etcd_service=$2
+  local etcd_namespace=$3
+  local schedule=$4  # Add a parameter for the cron schedule
 
-  cat <<EOF > ${etcd_name}-backup-job-${index}.yaml
+  cat <<EOF > ${etcd_name}-schedule-job.yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: ${etcd_name}-backup-job-${index}
+  name: ${etcd_name}-schedule-job
   namespace: $etcd_namespace
 spec:
   schedule: "$schedule"  # Use the provided schedule
@@ -52,8 +51,8 @@ spec:
             - -c
             - |
                 # Take snapshot of etcd member
-                SNAPSHOT=${etcd_name}-${index}_\$(date +%Y%m%d%H%M%S).db
-                ENDPOINTS=https://${etcd_name}-${index}.${etcd_service}.${etcd_namespace}.svc.cluster.local:2379
+                SNAPSHOT=${etcd_name}_\$(date +%Y%m%d%H%M%S).db
+                ENDPOINTS=https://${etcd_service}.${etcd_namespace}.svc.cluster.local:2379
                 etcdctl --endpoints \${ENDPOINTS} snapshot save /opt/dump/\${SNAPSHOT}
                 etcdutl --write-out=table snapshot status /opt/dump/\${SNAPSHOT}
                 md5sum /opt/dump/\${SNAPSHOT}
@@ -80,7 +79,7 @@ spec:
             - |
               # Set up MinIO client and upload the snapshot
               if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-                 \$MC cp /opt/dump/${etcd_name}-${index}_*.db storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER}/;
+                 \$MC cp /opt/dump/${etcd_name}_*.db storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/;
               else
                  exit 1;
               fi
@@ -131,11 +130,9 @@ EOF
 
 # Main script to backup etcd
 main() {
-  # Create and apply backup CronJobs
-  for i in {0..2}; do
-    create_backup_cronjob ${i} "$ETCD_NAME" "$ETCD_SERVICE" "$ETCD_NAMESPACE" "$SCHEDULE"
-    kubectl apply -f $ETCD_NAME-backup-job-${i}.yaml
-  done
+  # Create and apply backup CronJob
+  create_backup_cronjob "$ETCD_NAME" "$ETCD_SERVICE" "$ETCD_NAMESPACE" "$SCHEDULE"
+  kubectl apply -f $ETCD_NAME-schedule-job.yaml
 }
 
 # Execute the main script

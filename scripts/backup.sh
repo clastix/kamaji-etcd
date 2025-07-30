@@ -17,7 +17,7 @@ while getopts "e:s:n:" opt; do
     e ) ETCD_NAME=$OPTARG ;;
     s ) ETCD_SERVICE=$OPTARG ;;
     n ) ETCD_NAMESPACE=$OPTARG ;;
-    \? ) echo "Usage: ./backup-immediate.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace]"
+    \? ) echo "Usage: ./backup.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace]"
          exit 1 ;;
   esac
 done
@@ -28,7 +28,7 @@ create_backup_job() {
   local etcd_service=$2
   local etcd_namespace=$3
 
-  cat <<EOF > ${etcd_name}-backup-job-immediate.yaml
+  cat <<EOF > ${etcd_name}-backup-job.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -74,7 +74,7 @@ spec:
         - |
           # Set up MinIO client and upload the snapshot
           if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-             \$MC cp /opt/dump/${etcd_name}_*.db storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER}/;
+             \$MC cp /opt/dump/${etcd_name}_*.db storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/;
           else
              exit 1;
           fi
@@ -127,7 +127,7 @@ EOF
 main() {
   # Create and apply single backup Job
   create_backup_job "$ETCD_NAME" "$ETCD_SERVICE" "$ETCD_NAMESPACE"
-  kubectl apply -f $ETCD_NAME-backup-job-immediate.yaml
+  kubectl apply -f $ETCD_NAME-backup-job.yaml
 }
 
 # Execute the main script
