@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2025 Clastix Labs
+# SPDX-License-Identifier: Apache-2.0
+
 # Script to create an etcd pod for inspecting the etcd cluster
 
 # Default values

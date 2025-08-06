@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2025 Clastix Labs
+# SPDX-License-Identifier: Apache-2.0
+
 # Enable debugging, exit on errors, and ensure the script fails if any command in a pipeline fails
 if [ "${DEBUG}" = 1 ]; then
     set -x
