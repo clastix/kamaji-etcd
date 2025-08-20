@@ -71,9 +71,18 @@ spec:
       affinity: {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+      {{- if .Values.certManager.enabled }}
+        - name: root-certs
+          secret:
+            secretName: {{ include "etcd.certManager.clientCert" . }}
+        - name: ca
+          secret:
+            secretName: {{ include "etcd.certManager.serverCert" . }}
+      {{- else }}
         - name: root-certs
           secret:
             secretName: {{ include "etcd.clientSecretName" . }}
         - name: ca
           secret:
             secretName: {{ include "etcd.caSecretName" . }}
+      {{- end }}
