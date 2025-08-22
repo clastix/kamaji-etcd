@@ -18,7 +18,7 @@ spec:
       restartPolicy: Never
       initContainers:
         - name: cfssl
-          image:  "{{ printf "%s:%s" .Values.jobs.cfssl.image (default "latest" .Values.jobs.cfssl.tag) }}"
+          image: "{{ printf "%s:%s" .Values.jobs.cfssl.image (default "latest" .Values.jobs.cfssl.tag) }}"
           command:
             - bash
             - -c
