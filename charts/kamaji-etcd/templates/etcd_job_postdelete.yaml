@@ -19,7 +19,7 @@ spec:
       nodeSelector: {{- toYaml .Values.jobs.nodeSelector | nindent 8 }}
       containers:
         - name: kubectl
-          image: {{ printf "clastix/kubectl:%s" (include "etcd.jobsTagKubeVersion" .) }}
+          image: "{{ printf "%s:%s" .Values.jobs.kubectl.image (default (include "etcd.jobsTagKubeVersion" . | trim) .Values.jobs.kubectl.tag) }}"
           command:
             - kubectl
             - --namespace={{ .Release.Namespace }}

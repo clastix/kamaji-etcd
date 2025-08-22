@@ -18,7 +18,7 @@ spec:
       restartPolicy: Never
       initContainers:
         - name: cfssl
-          image: cfssl/cfssl:latest
+          image:  "{{ printf "%s:%s" .Values.jobs.cfssl.image (default "latest" .Values.jobs.cfssl.tag) }}"
           command:
             - bash
             - -c
@@ -35,7 +35,7 @@ spec:
               name: csr
       containers:
         - name: kubectl
-          image: {{ printf "clastix/kubectl:%s" (include "etcd.jobsTagKubeVersion" .) }}
+          image: "{{ printf "%s:%s" .Values.jobs.kubectl.image (default (include "etcd.jobsTagKubeVersion" . | trim) .Values.jobs.kubectl.tag) }}"
           command: ["/bin/sh", "-c"]
           args:
             - |

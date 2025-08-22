@@ -23,7 +23,7 @@ spec:
       restartPolicy: Never
       initContainers:
         - name: kubectl
-          image: {{ printf "clastix/kubectl:%s" (include "etcd.jobsTagKubeVersion" .) }}
+          image: "{{ printf "%s:%s" .Values.jobs.kubectl.image (default (include "etcd.jobsTagKubeVersion" . | trim) .Values.jobs.kubectl.tag) }}"
           command:
           - sh
           - -c
@@ -51,8 +51,8 @@ spec:
               value: /opt/certs/root-certs/tls.crt
             - name: ETCDCTL_KEY
               value: /opt/certs/root-certs/tls.key
-          image: {{ .Values.jobs.image.repository }}:{{ .Values.jobs.image.tag }}
-          imagePullPolicy: {{ .Values.jobs.image.pullPolicy }}
+          image: "{{ printf "%s:%s" .Values.jobs.etcd.image (default "latest" .Values.jobs.etcd.tag) }}"
+          imagePullPolicy: {{ .Values.jobs.etcd.pullPolicy }}
           name: etcd-client
           volumeMounts:
             - name: root-certs
