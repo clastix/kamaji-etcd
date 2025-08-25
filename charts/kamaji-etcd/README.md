@@ -76,7 +76,12 @@ Here the values you can override:
 | image.tag | string | `""` | Install image with specific tag, overwrite the tag in the chart |
 | imagePullSecrets | list | `[]` |  |
 | jobs.affinity | object | `{}` | Kubernetes affinity rules to apply to ancillary jobs |
-| jobs.image | object | `{"pullPolicy":"IfNotPresent","repository":"quay.io/coreos/etcd","tag":"v3.5.6"}` | etcd image to use for ancillary jobs |
+| jobs.cfssl | object | `{"image":"cfssl/cfssl","tag":""}` | addional images to use for ancillary jobs |
+| jobs.etcd.image | string | `"quay.io/coreos/etcd"` |  |
+| jobs.etcd.pullPolicy | string | `"IfNotPresent"` |  |
+| jobs.etcd.tag | string | `"v3.5.6"` |  |
+| jobs.kubectl.image | string | `"clastix/kubectl"` |  |
+| jobs.kubectl.tag | string | `""` |  |
 | jobs.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules for ancillary jobs |
 | jobs.tolerations | list | `[]` | Kubernetes node taints that the ancillary jobs would tolerate |
 | livenessProbe | object | `{"failureThreshold":3,"httpGet":{"path":"/livez","port":2381,"scheme":"HTTP"},"initialDelaySeconds":10,"periodSeconds":10,"timeoutSeconds":15}` | The livenessProbe for the etcd container |
