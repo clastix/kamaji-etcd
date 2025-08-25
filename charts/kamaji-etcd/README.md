@@ -63,6 +63,9 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
+| certManager.ca | object | `{"validity":"87600h"}` | CertManager etcd CA validity |
+| certManager.enabled | bool | `false` | Enable CertManager for etcd certificates |
+| certManager.issuerRef | object | `{}` | CertManager Issuer to use for the etcd certificates |
 | clientPort | int | `2379` | The client request port. |
 | clusterDomain | string | `"cluster.local"` | Domain of the Kubernetes cluster. |
 | datastore.annotations | object | `{}` | Assign additional Annotations to the datastore |
