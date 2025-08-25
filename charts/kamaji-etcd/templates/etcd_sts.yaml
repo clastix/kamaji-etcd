@@ -30,12 +30,25 @@ spec:
       {{- end }}
       volumes:
         {{- if .Values.certManager.enabled }}
-        - name: server-cert
-          secret:
-            secretName: {{ include "etcd.certManager.serverCert" .  }}
-        - name: peer-cert
-          secret:
-            secretName: {{ include "etcd.certManager.peerCert" .  }}
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "etcd.certManager.serverCert" .  }}
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+                    - key: tls.crt
+                      path: server.pem
+                    - key: tls.key
+                      path: server-key.pem
+              - secret:
+                  name: {{ include "etcd.certManager.peerCert" .  }}
+                  items:
+                    - key: tls.crt
+                      path: peer.pem
+                    - key: tls.key
+                      path: peer-key.pem
         {{- else }}
         - name: certs
           secret:
@@ -57,17 +70,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/run/etcd
-            {{- if .Values.certManager.enabled }}
-            - name: server-cert
-              mountPath: /etc/etcd/tls/server
-              readOnly: true
-            - name: peer-cert
-              mountPath: /etc/etcd/tls/peer
-              readOnly: true
-            {{- else }}
             - name: certs
               mountPath: /etc/etcd/pki
-            {{- end }}
           command:
             - etcd
             - --data-dir=/var/run/etcd
@@ -82,21 +86,12 @@ spec:
             - --listen-peer-urls=https://0.0.0.0:{{ .Values.peerApiPort }}
             - --client-cert-auth=true
             - --peer-client-cert-auth=true
-          {{- if .Values.certManager.enabled }}
-            - --trusted-ca-file=/etc/etcd/tls/server/ca.crt
-            - --cert-file=/etc/etcd/tls/server/tls.crt
-            - --key-file=/etc/etcd/tls/server/tls.key
-            - --peer-trusted-ca-file=/etc/etcd/tls/peer/ca.crt
-            - --peer-cert-file=/etc/etcd/tls/peer/tls.crt
-            - --peer-key-file=/etc/etcd/tls/peer/tls.key
-          {{- else }}
             - --trusted-ca-file=/etc/etcd/pki/ca.crt
             - --cert-file=/etc/etcd/pki/server.pem
             - --key-file=/etc/etcd/pki/server-key.pem
             - --peer-trusted-ca-file=/etc/etcd/pki/ca.crt
             - --peer-cert-file=/etc/etcd/pki/peer.pem
             - --peer-key-file=/etc/etcd/pki/peer-key.pem
-          {{- end }}
             - --auto-compaction-mode={{ .Values.autoCompactionMode }}
             - --auto-compaction-retention={{ .Values.autoCompactionRetention }}
             - --snapshot-count={{ .Values.snapshotCount }}
