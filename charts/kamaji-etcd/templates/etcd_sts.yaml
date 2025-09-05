@@ -29,9 +29,31 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.certManager.enabled }}
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "etcd.certManager.serverCert" .  }}
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+                    - key: tls.crt
+                      path: server.pem
+                    - key: tls.key
+                      path: server-key.pem
+              - secret:
+                  name: {{ include "etcd.certManager.peerCert" .  }}
+                  items:
+                    - key: tls.crt
+                      path: peer.pem
+                    - key: tls.key
+                      path: peer-key.pem
+        {{- else }}
         - name: certs
           secret:
             secretName: {{ include "etcd.caSecretName" . }}
+        {{- end }}
       containers:
         - name: etcd
           image: {{ include "etcd.fullyQualifiedDockerImage" . }}

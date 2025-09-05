@@ -1,3 +1,4 @@
+{{- if not .Values.certManager.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -34,3 +35,4 @@ spec:
       {{- with .Values.jobs.affinity }}
       affinity: {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

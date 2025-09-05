@@ -95,6 +95,34 @@ Name of the etcd CA secret.
 {{- end }}
 
 {{/*
+Name of the etcd CA secret.
+*/}}
+{{- define "etcd.certManager.ca" }}
+{{- printf "%s-%s" (include "etcd.fullname" .) "ca" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Name of the etcd server secret.
+*/}}
+{{- define "etcd.certManager.serverCert" }}
+{{- printf "%s-%s" (include "etcd.fullname" .) "server-certs" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Name of the etcd peer CA secret.
+*/}}
+{{- define "etcd.certManager.peerCert" }}
+{{- printf "%s-%s" (include "etcd.fullname" .) "peer-certs" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Name of the etcd client secret.
+*/}}
+{{- define "etcd.certManager.clientCert" }}
+{{- printf "%s-%s" (include "etcd.fullname" .) "client-certs" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Name of the certificate signing requests for the certificates required by etcd.
 */}}
 {{- define "etcd.csrConfigMapName" }}
