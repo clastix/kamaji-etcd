@@ -1,6 +1,6 @@
 # kamaji-etcd
 
-![Version: 0.12.0](https://img.shields.io/badge/Version-0.12.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.17](https://img.shields.io/badge/AppVersion-3.5.17-informational?style=flat-square)
+![Version: 0.13.0](https://img.shields.io/badge/Version-0.13.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.5.17](https://img.shields.io/badge/AppVersion-3.5.17-informational?style=flat-square)
 
 Helm chart for deploying a multi-tenant `etcd` cluster.
 
