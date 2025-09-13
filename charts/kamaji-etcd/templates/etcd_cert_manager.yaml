@@ -1,4 +1,5 @@
 {{- if .Values.certManager.enabled }}
+{{- if .Values.certManager.ca.create }}
 ---
 apiVersion: v1
 kind: Secret
@@ -7,6 +8,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 type: Opaque
 data: {}
+{{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -31,6 +33,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 type: Opaque
 data: {}
+{{- if .Values.certManager.ca.create }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -62,6 +65,7 @@ metadata:
 spec:
   ca:
     secretName: {{ include "etcd.certManager.ca" . }}
+{{- end }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

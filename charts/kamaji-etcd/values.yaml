@@ -229,4 +229,6 @@ certManager:
   #  group: cert-manager.io
   # -- CertManager etcd CA validity
   ca:
-   validity: 87600h # 10 years
+    name: ""
+    create: true
+    validity: 87600h # 10 years

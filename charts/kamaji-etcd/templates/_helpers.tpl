@@ -98,7 +98,7 @@ Name of the etcd CA secret.
 Name of the etcd CA secret.
 */}}
 {{- define "etcd.certManager.ca" }}
-{{- printf "%s-%s" (include "etcd.fullname" .) "ca" | trunc 63 | trimSuffix "-" }}
+{{- default (printf "%s-%s" (include "etcd.fullname" .) "ca" | trunc 63 | trimSuffix "-") .Values.certManager.ca.name }}
 {{- end }}
 
 {{/*
