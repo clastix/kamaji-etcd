@@ -1,4 +1,4 @@
-{{- if not .Values.certManager.enabled }}
+{{- if .Values.selfSignedCertificates.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:

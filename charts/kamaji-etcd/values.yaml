@@ -219,6 +219,10 @@ jobs:
     tag: v3.5.6 # latest container image with shell available!
     pullPolicy: IfNotPresent
 
+selfSignedCertificates:
+  # -- Enables the generation of self-signed certificates for etcd using the cfssl, and kubectl jobs.
+  enabled: true
+
 certManager:
   # -- Enable CertManager for etcd certificates
   enabled: false
@@ -227,6 +231,19 @@ certManager:
   #  name: kamaji-etcd-issuer
   #  kind: ClusterIssuer
   #  group: cert-manager.io
-  # -- CertManager etcd CA validity
   ca:
-   validity: 87600h # 10 years
+    create: true
+    nameOverride: ""
+    # -- CertManager etcd CA validity
+    validity: 87600h # 10 years
+  serverCert:
+    create: true
+    nameOverride: ""
+    additionalDnsNames: []
+  peerCert:
+    create: true
+    nameOverride: ""
+    additionalDnsNames: []
+  clientCert:
+    create: true
+    nameOverride: ""

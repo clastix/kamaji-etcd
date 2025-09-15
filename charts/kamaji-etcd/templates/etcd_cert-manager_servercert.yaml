@@ -1,0 +1,55 @@
+{{- if .Values.certManager.enabled }}
+{{- if .Values.certManager.serverCert.create }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "etcd.certManager.serverCert" . }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data: { }
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "etcd.certManager.serverCert" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ include "etcd.certManager.serverCert" .  }}
+  secretTemplate:
+    labels:
+      "kamaji-etcd.clastix.io/etcd": {{ include "etcd.fullname" . }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  duration: 2160h # 90 days
+  renewBefore: 168h # 15 days
+  isCA: false
+  usages:
+    - signing
+    - key encipherment
+    - server auth
+    - client auth
+  subject:
+    organizations:
+      - kamaji-etcd
+  commonName: {{ include "etcd.fullname" . }}
+  dnsNames:
+  {{- $outer := $ -}}
+    {{- range $count := until (int $.Values.replicas) }}
+    - {{ printf "%s-%d.%s.%s.svc.%s" ( include "etcd.fullname" $outer ) $count (include "etcd.serviceName" $outer) $.Release.Namespace $.Values.clusterDomain }}
+    {{- end }}
+    - {{ printf "%s.%s.svc.%s" (include "client.serviceName" .) $.Release.Namespace $.Values.clusterDomain }}
+    - "etcd-server.{{ .Release.Namespace }}.svc.{{ $.Values.clusterDomain }}"
+    - "etcd-server.{{ .Release.Namespace }}.svc"
+    - "etcd-server"
+    {{- range .Values.certManager.serverCert.additionalDnsNames }}
+    - {{ . | quote }}
+    {{- end }}
+  ipAddresses:
+    - 127.0.0.1
+  issuerRef:
+    name: {{ include "etcd.certManager.ca" . }}
+    kind: Issuer
+    group: cert-manager.io
+{{- end }}
+{{- end }}

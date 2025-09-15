@@ -98,28 +98,44 @@ Name of the etcd CA secret.
 Name of the etcd CA secret.
 */}}
 {{- define "etcd.certManager.ca" }}
+{{- if .Values.certManager.ca.nameOverride }}
+{{- .Values.certManager.ca.nameOverride }}
+{{- else }}
 {{- printf "%s-%s" (include "etcd.fullname" .) "ca" | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 
 {{/*
 Name of the etcd server secret.
 */}}
 {{- define "etcd.certManager.serverCert" }}
+{{- if .Values.certManager.serverCert.nameOverride }}
+{{- .Values.certManager.serverCert.nameOverride }}
+{{- else }}
 {{- printf "%s-%s" (include "etcd.fullname" .) "server-certs" | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 
 {{/*
 Name of the etcd peer CA secret.
 */}}
 {{- define "etcd.certManager.peerCert" }}
+{{- if .Values.certManager.peerCert.nameOverride }}
+{{- .Values.certManager.peerCert.nameOverride }}
+{{- else }}
 {{- printf "%s-%s" (include "etcd.fullname" .) "peer-certs" | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 
 {{/*
 Name of the etcd client secret.
 */}}
 {{- define "etcd.certManager.clientCert" }}
+{{- if .Values.certManager.clientCert.nameOverride }}
+{{- .Values.certManager.clientCert.nameOverride }}
+{{- else }}
 {{- printf "%s-%s" (include "etcd.fullname" .) "client-certs" | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -196,4 +212,11 @@ Client cluster endpoints.
 */}}
 {{- define "client.endpointsYAML" }}
 {{ printf "- %s.%s.svc.%s:%d\n" ( include "client.serviceName" .) $.Release.Namespace $.Values.clusterDomain (int $.Values.clientPort) }}
+{{- end }}
+
+{{/*
+Checking mutually exclusive status for self signed certificates and cert manager.
+*/}}
+{{- if and .Values.selfSignedCertificates.enabled .Values.certManager.enabled }}
+{{- fail "selfSignedCertificates.enabled and certManager.enabled are mutually exclusive and cannot be both true" }}
 {{- end }}
