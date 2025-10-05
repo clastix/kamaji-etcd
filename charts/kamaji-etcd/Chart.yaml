@@ -15,7 +15,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.13.0
+version: 0.14.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -46,15 +46,4 @@ annotations:
   artifacthub.io/operatorCapabilities: "Full Lifecycle"
   artifacthub.io/changes: |
     - kind: feat
-      description: improve backup and restore documentation and scripts
-      links:
-        - https://github.com/clastix/kamaji-etcd/pull/115
-        - https://github.com/clastix/kamaji-etcd/pull/117
-    - kind: feat
-      description: configurable job image repositories
-      links:
-        - https://github.com/clastix/kamaji-etcd/pull/122
-    - kind: feat
-      description: add support for cert-manager for etcd tls secrets
-      links:
-        - https://github.com/clastix/kamaji-etcd/pull/121
+      description: custom certmanager object names and customisations
