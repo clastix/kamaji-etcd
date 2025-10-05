@@ -63,9 +63,19 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
-| certManager.ca | object | `{"validity":"87600h"}` | CertManager etcd CA validity |
+| certManager.ca.create | bool | `true` |  |
+| certManager.ca.nameOverride | string | `""` |  |
+| certManager.ca.validity | string | `"87600h"` | CertManager etcd CA validity |
+| certManager.clientCert.create | bool | `true` |  |
+| certManager.clientCert.nameOverride | string | `""` |  |
 | certManager.enabled | bool | `false` | Enable CertManager for etcd certificates |
 | certManager.issuerRef | object | `{}` | CertManager Issuer to use for the etcd certificates |
+| certManager.peerCert.additionalDnsNames | list | `[]` |  |
+| certManager.peerCert.create | bool | `true` |  |
+| certManager.peerCert.nameOverride | string | `""` |  |
+| certManager.serverCert.additionalDnsNames | list | `[]` |  |
+| certManager.serverCert.create | bool | `true` |  |
+| certManager.serverCert.nameOverride | string | `""` |  |
 | clientPort | int | `2379` | The client request port. |
 | clusterDomain | string | `"cluster.local"` | Domain of the Kubernetes cluster. |
 | datastore.annotations | object | `{}` | Assign additional Annotations to the datastore |
@@ -103,6 +113,7 @@ Here the values you can override:
 | replicas | int | `3` | Size of the etcd cluster |
 | resources | object | `{"limits":{},"requests":{}}` | Resources assigned to the etcd containers |
 | securityContext | object | `{"allowPrivilegeEscalation":false}` | The securityContext to apply to etcd |
+| selfSignedCertificates.enabled | bool | `true` | Enables the generation of self-signed certificates for etcd using the cfssl, and kubectl jobs. |
 | serviceAccount | object | `{"create":true,"name":""}` | Install an etcd with enabled multi-tenancy |
 | serviceAccount.create | bool | `true` | Create a ServiceAccount, required to install and provision the etcd backing storage (default: true) |
 | serviceAccount.name | string | `""` | Define the ServiceAccount name to use during the setup and provision of the etcd backing storage (default: "") |

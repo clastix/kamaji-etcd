@@ -1,0 +1,40 @@
+{{- if and (.Values.certManager.enabled) (.Values.certManager.ca.create) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "etcd.certManager.ca" . }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data: { }
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "etcd.certManager.ca" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  isCA: true
+  duration: {{ .Values.certManager.ca.validity }}
+  usages:
+    - crl sign
+    - cert sign
+  commonName: {{ include "etcd.certManager.ca" . }}
+  secretName: {{ include "etcd.certManager.ca" . }}
+  secretTemplate:
+    labels:
+      "kamaji-etcd.clastix.io/etcd": {{ include "etcd.fullname" . }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+  {{- toYaml .Values.certManager.issuerRef | nindent 4 }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "etcd.certManager.ca" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ca:
+    secretName: {{ include "etcd.certManager.ca" . }}
+{{- end }}
