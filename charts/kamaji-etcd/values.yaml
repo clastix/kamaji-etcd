@@ -83,9 +83,12 @@ podLabels:
 # -- Annotations to add to all etcd pods
 podAnnotations: {}
 
-# -- The securityContext to apply to etcd
+# -- The securityContext to apply to etcd containers
 securityContext:
   allowPrivilegeEscalation: false
+
+# -- The securityContext to apply to etcd pods
+podSecurityContext: {}
 
 # -- The priorityClassName to apply to etcd
 priorityClassName: system-cluster-critical

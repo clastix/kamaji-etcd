@@ -108,11 +108,12 @@ Here the values you can override:
 | persistentVolumeClaim.storageClassName | string | `""` | A specific storage class |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
 | podLabels | object | `{"application":"kamaji-etcd"}` | Labels to add to all etcd pods |
+| podSecurityContext | object | `{}` | The securityContext to apply to etcd pods |
 | priorityClassName | string | `"system-cluster-critical"` | The priorityClassName to apply to etcd |
 | quotaBackendBytes | string | `"8589934592"` | Raise alarms when backend size exceeds the given quota. It will put the cluster into a maintenance mode which only accepts key reads and deletes.  |
 | replicas | int | `3` | Size of the etcd cluster |
 | resources | object | `{"limits":{},"requests":{}}` | Resources assigned to the etcd containers |
-| securityContext | object | `{"allowPrivilegeEscalation":false}` | The securityContext to apply to etcd |
+| securityContext | object | `{"allowPrivilegeEscalation":false}` | The securityContext to apply to etcd containers |
 | selfSignedCertificates.enabled | bool | `true` | Enables the generation of self-signed certificates for etcd using the cfssl, and kubectl jobs. |
 | serviceAccount | object | `{"create":true,"name":""}` | Install an etcd with enabled multi-tenancy |
 | serviceAccount.create | bool | `true` | Create a ServiceAccount, required to install and provision the etcd backing storage (default: true) |
