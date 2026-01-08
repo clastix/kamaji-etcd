@@ -87,6 +87,8 @@ podAnnotations: {}
 securityContext:
   allowPrivilegeEscalation: false
 
+podSecurityContext: {}
+
 # -- The priorityClassName to apply to etcd
 priorityClassName: system-cluster-critical
 
