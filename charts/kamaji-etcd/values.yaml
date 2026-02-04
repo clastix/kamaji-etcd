@@ -75,6 +75,10 @@ persistentVolumeClaim:
   # -- The custom annotations to add to the PVC
   customAnnotations: {}
   #  volumeType: local
+  retentionPolicyWhenDeleted: Retain
+  # what happens to PVCs created when the StatefulSet is deleted
+  # `Retain` causes PVCs to not be affected by StatefulSet deletion
+  # `Delete` policy causes those PVCs to be deleted
 
 # -- Labels to add to all etcd pods
 podLabels:

@@ -11,6 +11,10 @@ spec:
     matchLabels:
       {{- include "etcd.selectorLabels" . | nindent 6 }}
   replicas: {{ .Values.replicas }}
+  {{- if .Values.persistentVolumeClaim.retentionPolicyWhenDeleted }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ .Values.persistentVolumeClaim.retentionPolicyWhenDeleted }}
+  {{- end }}
   template:
     metadata:
       name: etcd
