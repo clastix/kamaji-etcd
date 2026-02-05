@@ -104,7 +104,7 @@ Here the values you can override:
 | peerApiPort | int | `2380` | The peer API port which servers are listening to. |
 | persistentVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | The Access Mode to storage |
 | persistentVolumeClaim.customAnnotations | object | `{}` | The custom annotations to add to the PVC |
-| persistentVolumeClaim.retentionPolicyWhenDeleted | string | `"Retain"` | What happens to PVCs when the StatefulSet is deleted. `Retain` (default) causes PVCs to not be affected by StatefulSet deletion. `Delete` policy causes those PVCs to be deleted. |
+| persistentVolumeClaim.retentionPolicyWhenDeleted | string | `"Retain"` | What happens to PVCs created when the StatefulSet is deleted. `Retain` causes PVCs to not be affected by StatefulSet deletion, `Delete` policy causes those PVCs to be deleted |
 | persistentVolumeClaim.size | string | `"8Gi"` | The size of persistent storage for etcd data  |
 | persistentVolumeClaim.storageClassName | string | `""` | A specific storage class |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
