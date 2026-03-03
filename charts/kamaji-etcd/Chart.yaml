@@ -15,7 +15,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.14.0
+version: 0.15.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -45,5 +45,5 @@ annotations:
   artifacthub.io/operator: "true"
   artifacthub.io/operatorCapabilities: "Full Lifecycle"
   artifacthub.io/changes: |
-    - kind: feat
-      description: custom certmanager object names and customisations
+    - kind: added
+      description: Persistent Volume Claim retention policy
