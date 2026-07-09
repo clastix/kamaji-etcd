@@ -1,4 +1,10 @@
 # Defragmenting Data
+
+> **Recommended:** the chart now ships scheduled defragmentation as an opt-in
+> feature. Set `defrag.enabled=true` (see chart values) to have Helm manage a
+> defrag CronJob (via `etcd-defrag`), instead of applying `scripts/defrag.sh`
+> manually. The script remains for ad-hoc runs.
+
 For dense Kubernetes clusters, `etcd` can suffer from poor performance if the keyspace grows too large and exceeds the space quota. Periodically maintain and defragment `etcd` to free up space in the data store. See details [here](https://etcd.io/docs/v3.5/op-guide/maintenance/).
 
 Monitor Prometheus for `etcd` metrics and defragment it when required, otherwise, `etcd` can raise a cluster-wide alarm that puts the cluster into a maintenance mode accepting only key reads and deletes.
