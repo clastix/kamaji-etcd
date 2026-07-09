@@ -1,0 +1,141 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "etcd.fullname" . }}-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.backup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.backup.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: {{ .Release.Service }}
+            app.kubernetes.io/part-of: {{ include "etcd.name" . }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            {{- include "etcd.jobPodSecurityContext" . | nindent 12 }}
+          {{- with .Values.jobs.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobs.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobs.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          initContainers:
+            - name: snapshot
+              image: "{{ printf "%s:%s" .Values.jobs.etcd.image (default "latest" .Values.jobs.etcd.tag) }}"
+              imagePullPolicy: {{ .Values.jobs.etcd.pullPolicy }}
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  SNAPSHOT="/snapshots/{{ include "etcd.fullname" . }}_$(date +%Y%m%d%H%M%S).db"
+                  etcdctl snapshot save "${SNAPSHOT}"
+                  etcdutl --write-out=table snapshot status "${SNAPSHOT}"
+              env:
+                - name: ETCDCTL_ENDPOINTS
+                  value: https://{{ include "client.serviceName" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.clientPort }}
+                - name: ETCDCTL_CACERT
+                  value: /opt/certs/ca/ca.crt
+                - name: ETCDCTL_CERT
+                  value: /opt/certs/root-certs/tls.crt
+                - name: ETCDCTL_KEY
+                  value: /opt/certs/root-certs/tls.key
+              securityContext:
+                {{- include "etcd.jobContainerSecurityContext" . | nindent 16 }}
+              volumeMounts:
+                - name: snapshots
+                  mountPath: /snapshots
+                {{- include "etcd.jobCertVolumeMounts" . | nindent 16 }}
+          containers:
+            - name: upload
+              image: "{{ include "etcd.backup.image" . }}"
+              imagePullPolicy: {{ .Values.backup.image.pullPolicy }}
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  DEST=":s3:${STORAGE_BUCKET_NAME}${STORAGE_BUCKET_FOLDER:+/${STORAGE_BUCKET_FOLDER}}"
+                  rclone copy /snapshots/{{ include "etcd.fullname" . }}_*.db "${DEST}/"
+                  {{- if eq .Values.backup.retention.mode "count" }}
+                  rclone lsf --files-only --include "{{ include "etcd.fullname" . }}_*.db" "${DEST}/" \
+                    | sort -r | tail -n +{{ add (int .Values.backup.retention.count) 1 }} \
+                    | while read -r f; do rclone deletefile "${DEST}/${f}"; done
+                  {{- else if eq .Values.backup.retention.mode "age" }}
+                  rclone delete --min-age {{ .Values.backup.retention.maxAge }} --include "{{ include "etcd.fullname" . }}_*.db" "${DEST}/"
+                  {{- end }}
+              env:
+                - name: STORAGE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storageSecret }}
+                      key: storage-url
+                - name: STORAGE_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storageSecret }}
+                      key: storage-access-key
+                - name: STORAGE_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storageSecret }}
+                      key: storage-secret-key
+                - name: STORAGE_BUCKET_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storageSecret }}
+                      key: storage-bucket-name
+                - name: STORAGE_BUCKET_FOLDER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storageSecret }}
+                      key: storage-bucket-folder
+                - name: RCLONE_S3_PROVIDER
+                  value: {{ .Values.backup.s3Provider | quote }}
+                - name: RCLONE_S3_ACCESS_KEY_ID
+                  value: $(STORAGE_ACCESS_KEY)
+                - name: RCLONE_S3_SECRET_ACCESS_KEY
+                  value: $(STORAGE_SECRET_KEY)
+                - name: RCLONE_S3_ENDPOINT
+                  value: $(STORAGE_URL)
+                - name: RCLONE_CONFIG
+                  value: /dev/null
+                - name: XDG_CACHE_HOME
+                  value: /tmp
+                - name: TMPDIR
+                  value: /tmp
+              securityContext:
+                {{- include "etcd.jobContainerSecurityContext" . | nindent 16 }}
+              {{- with .Values.backup.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              volumeMounts:
+                - name: snapshots
+                  mountPath: /snapshots
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: snapshots
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+            {{- include "etcd.jobCertVolumes" . | nindent 12 }}
+{{- end }}
