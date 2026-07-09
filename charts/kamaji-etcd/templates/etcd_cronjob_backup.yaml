@@ -107,6 +107,7 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.backup.storageSecret }}
                       key: storage-bucket-folder
+                      optional: true
                 - name: RCLONE_S3_PROVIDER
                   value: {{ .Values.backup.s3Provider | quote }}
                 - name: RCLONE_S3_ACCESS_KEY_ID
