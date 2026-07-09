@@ -213,10 +213,3 @@ Client cluster endpoints.
 {{- define "client.endpointsYAML" }}
 {{ printf "- %s.%s.svc.%s:%d\n" ( include "client.serviceName" .) $.Release.Namespace $.Values.clusterDomain (int $.Values.clientPort) }}
 {{- end }}
-
-{{/*
-Checking mutually exclusive status for self signed certificates and cert manager.
-*/}}
-{{- if and .Values.selfSignedCertificates.enabled .Values.certManager.enabled }}
-{{- fail "selfSignedCertificates.enabled and certManager.enabled are mutually exclusive and cannot be both true" }}
-{{- end }}
