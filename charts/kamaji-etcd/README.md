@@ -63,6 +63,19 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
+| backup | object | `{"enabled":false,"failedJobsHistoryLimit":3,"image":{"pullPolicy":"IfNotPresent","repository":"rclone/rclone","tag":""},"resources":{},"retention":{"count":7,"maxAge":"30d","mode":"none"},"s3Provider":"Minio","schedule":"0 0 * * *","storageSecret":"backup-storage-secret","successfulJobsHistoryLimit":3}` | Scheduled etcd snapshot to S3-compatible object storage |
+| backup.enabled | bool | `false` | Enable the backup CronJob |
+| backup.failedJobsHistoryLimit | int | `3` | Number of failed finished jobs to retain |
+| backup.image | object | `{"pullPolicy":"IfNotPresent","repository":"rclone/rclone","tag":""}` | rclone image used to upload the snapshot |
+| backup.image.tag | string | `""` | Image tag; defaults to a chart-pinned version when empty |
+| backup.resources | object | `{}` | Resources for the backup pod |
+| backup.retention.count | int | `7` | Keep only the N most recent snapshots (mode=count) |
+| backup.retention.maxAge | string | `"30d"` | Delete snapshots older than this rclone duration, e.g. 720h or 30d (mode=age) |
+| backup.retention.mode | string | `"none"` | Prune strategy for old snapshots: none | count | age (none relies on bucket lifecycle) |
+| backup.s3Provider | string | `"Minio"` | rclone S3 provider (Minio, AWS, Ceph, Other, ...) |
+| backup.schedule | string | `"0 0 * * *"` | Cron schedule for the backup job |
+| backup.storageSecret | string | `"backup-storage-secret"` | Name of a pre-existing secret with S3/MinIO credentials and target (keys: storage-url, storage-access-key, storage-secret-key, storage-bucket-name, storage-bucket-folder) |
+| backup.successfulJobsHistoryLimit | int | `3` | Number of successful finished jobs to retain |
 | certManager.ca.create | bool | `true` |  |
 | certManager.ca.nameOverride | string | `""` |  |
 | certManager.ca.validity | string | `"87600h"` | CertManager etcd CA validity |
@@ -82,6 +95,15 @@ Here the values you can override:
 | datastore.enabled | bool | `true` | Create a datastore custom resource for Kamaji |
 | datastore.headless | bool | `true` | Expose the headless service endpoints in the datastore. Set to false to expose with regular service. |
 | datastore.name | string | `""` | Name of Kamaji datastore, set to fully qualified etcd name when null or not provided |
+| defrag | object | `{"enabled":false,"failedJobsHistoryLimit":3,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/ahrtr/etcd-defrag","tag":""},"resources":{},"rule":"dbSizeInUse / dbSize <= 0.55 || dbQuotaUsage > 0.8","schedule":"0 0 * * *","successfulJobsHistoryLimit":3}` | Scheduled etcd defragmentation |
+| defrag.enabled | bool | `false` | Enable the defrag CronJob |
+| defrag.failedJobsHistoryLimit | int | `3` | Number of failed finished jobs to retain |
+| defrag.image | object | `{"pullPolicy":"IfNotPresent","repository":"ghcr.io/ahrtr/etcd-defrag","tag":""}` | etcd-defrag image |
+| defrag.image.tag | string | `""` | Image tag; defaults to a chart-pinned version when empty |
+| defrag.resources | object | `{}` | Resources for the defrag pod |
+| defrag.rule | string | `"dbSizeInUse / dbSize <= 0.55 || dbQuotaUsage > 0.8"` | Defrag rule evaluated by etcd-defrag (defrag runs when it evaluates true) |
+| defrag.schedule | string | `"0 0 * * *"` | Cron schedule for the defrag job |
+| defrag.successfulJobsHistoryLimit | int | `3` | Number of successful finished jobs to retain |
 | extraArgs | list | `[]` | A list of extra arguments to add to the etcd default ones |
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` | Pull policy to use |
