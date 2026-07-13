@@ -1,5 +1,11 @@
 # Take a backup
 
+> **Recommended:** the chart now ships a scheduled backup as an opt-in feature.
+> Set `backup.enabled=true` (see chart values) to have Helm manage a snapshot
+> CronJob that uploads to S3/MinIO via `rclone`, instead of applying
+> `scripts/schedule.sh` manually. The `backup.sh` script below remains for
+> ad-hoc, one-off backups.
+
 The `backup.sh` script is designed to create a job for taking snapshot of `etcd` instance. The script generates Kubernetes Job manifests and applies them to the specified namespace.
 
 ## Overview

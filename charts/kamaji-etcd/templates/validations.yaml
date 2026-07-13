@@ -1,0 +1,27 @@
+{{/*
+Checking mutually exclusive status for self signed certificates and cert manager.
+Lives here (a rendered template), not in _helpers.tpl: Helm does not execute
+top-level content of underscore-prefixed partials, so a fail there never fires.
+*/}}
+{{- if and .Values.selfSignedCertificates.enabled .Values.certManager.enabled }}
+{{- fail "selfSignedCertificates.enabled and certManager.enabled are mutually exclusive and cannot be both true" }}
+{{- end }}
+
+{{/*
+Validate backup configuration.
+*/}}
+{{- if .Values.backup.enabled }}
+{{- if not .Values.backup.storageSecret }}
+{{- fail "backup.enabled=true requires backup.storageSecret to be set" }}
+{{- end }}
+{{- $mode := .Values.backup.retention.mode }}
+{{- if not (has $mode (list "none" "count" "age")) }}
+{{- fail (printf "backup.retention.mode must be one of none|count|age, got %q" $mode) }}
+{{- end }}
+{{- if and (eq $mode "count") (le (int .Values.backup.retention.count) 0) }}
+{{- fail "backup.retention.mode=count requires backup.retention.count > 0" }}
+{{- end }}
+{{- if and (eq $mode "age") (not .Values.backup.retention.maxAge) }}
+{{- fail "backup.retention.mode=age requires backup.retention.maxAge to be set" }}
+{{- end }}
+{{- end }}

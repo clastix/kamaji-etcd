@@ -47,3 +47,7 @@ annotations:
   artifacthub.io/changes: |
     - kind: added
       description: Persistent Volume Claim retention policy
+    - kind: added
+      description: Scheduled backup CronJob (opt-in, S3/MinIO via rclone)
+    - kind: added
+      description: Scheduled defragmentation CronJob (opt-in, etcd-defrag)
