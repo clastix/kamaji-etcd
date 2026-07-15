@@ -96,6 +96,8 @@ Here the values you can override:
 | jobs.kubectl.image | string | `"clastix/kubectl"` |  |
 | jobs.kubectl.tag | string | `""` |  |
 | jobs.nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Kubernetes node selector rules for ancillary jobs |
+| jobs.podSecurityContext | object | `{"fsGroup":1000,"runAsGroup":1000,"runAsUser":1000}` | The securityContext to apply to ancillary job pods |
+| jobs.securityContext | object | `{"allowPrivilegeEscalation":false}` | The securityContext to apply to ancillary job containers (init and main) |
 | jobs.tolerations | list | `[]` | Kubernetes node taints that the ancillary jobs would tolerate |
 | livenessProbe | object | `{"failureThreshold":3,"httpGet":{"path":"/livez","port":2381,"scheme":"HTTP"},"initialDelaySeconds":10,"periodSeconds":10,"timeoutSeconds":15}` | The livenessProbe for the etcd container |
 | metricsPort | int | `2381` | The port where etcd exposes metrics. |
