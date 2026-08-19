@@ -61,6 +61,12 @@ spec:
           value: /opt/certs/root-client-certs/tls.crt
         - name: ETCDCTL_KEY
           value: /opt/certs/root-client-certs/tls.key
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
         - mountPath: /opt/certs/root-client-certs
           name: root-client-certs
@@ -69,53 +75,52 @@ spec:
         - mountPath: /opt/dump
           name: shared-data
       containers:
-      - name: minio-client
-        image: minio/mc:RELEASE.2022-11-07T23-47-39Z
+      - name: upload
+        image: rclone/rclone:1.74.4
         command:
         - sh
         - -c
         - |
-          # Set up MinIO client and upload the snapshot
-          if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-             \$MC cp /opt/dump/${etcd_name}_*.db storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/;
-          else
-             exit 1;
-          fi
+          # Upload the snapshot to the remote defined by the secret
+          set -e
+          : "\${RCLONE_CONFIG_BACKUP_TYPE:?not set - see docs/backup.md for the required secret keys}"
+          : "\${STORAGE_BUCKET_NAME:?not set - see docs/backup.md for the required secret keys}"
+          DEST="backup:\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}"
+          rclone copy /opt/dump "\${DEST}/" --include "${etcd_name}_*.db"
+        envFrom:
+        - secretRef:
+            name: backup-storage-secret
         env:
-        - name: STORAGE_URL
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-url
-        - name: STORAGE_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-access-key
-        - name: STORAGE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-secret-key
-        - name: STORAGE_BUCKET_NAME
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-bucket-name
-        - name: STORAGE_BUCKET_FOLDER
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-bucket-folder
-        - name: MC
-          value: "/usr/bin/mc --config-dir /tmp"
+        - name: RCLONE_CONFIG
+          value: /dev/null
+        - name: XDG_CACHE_HOME
+          value: /tmp
+        - name: TMPDIR
+          value: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
         - mountPath: /opt/dump
           name: shared-data
+        - mountPath: /tmp
+          name: tmp
       restartPolicy: OnFailure
       serviceAccountName: ${etcd_name}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: shared-data
+        emptyDir: {}
+      - name: tmp
         emptyDir: {}
       - name: root-client-certs
         secret:

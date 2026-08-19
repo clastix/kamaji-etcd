@@ -44,49 +44,43 @@ spec:
   template:
     spec:
       initContainers:
-      - name: minio-client
-        image: minio/mc:RELEASE.2022-11-07T23-47-39Z
+      - name: download
+        image: rclone/rclone:1.74.4
         command:
         - sh
         - -c
         - |
-          # Set up MinIO client and download the snapshot
-          if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-             \$MC cp "storage/\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/${SNAPSHOT}" /opt/dump;
-          else
-             exit 1;
-          fi
+          # Download the snapshot from the remote defined by the secret
+          set -e
+          : "\${RCLONE_CONFIG_BACKUP_TYPE:?not set - see docs/restore.md for the required secret keys}"
+          : "\${STORAGE_BUCKET_NAME:?not set - see docs/restore.md for the required secret keys}"
+          DEST="backup:\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}"
+          rclone copy "\${DEST}/${SNAPSHOT}" /opt/dump/
+        envFrom:
+        - secretRef:
+            name: backup-storage-secret
         env:
-        - name: STORAGE_URL
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-url
-        - name: STORAGE_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-access-key
-        - name: STORAGE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-secret-key
-        - name: STORAGE_BUCKET_NAME
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-bucket-name
-        - name: STORAGE_BUCKET_FOLDER
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-bucket-folder
-        - name: MC
-          value: "/usr/bin/mc --config-dir /tmp"
+        - name: RCLONE_CONFIG
+          value: /dev/null
+        - name: XDG_CACHE_HOME
+          value: /tmp
+        - name: TMPDIR
+          value: /tmp
+        # Writes only to emptyDir volumes, so it can be fully hardened.
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
         - mountPath: /opt/dump
           name: shared-data
+        - mountPath: /tmp
+          name: tmp
       containers:
       - name: etcd-client
         image: quay.io/coreos/etcd:v3.5.6
@@ -112,6 +106,18 @@ spec:
           value: /opt/certs/root-client-certs/tls.crt
         - name: ETCDCTL_KEY
           value: /opt/certs/root-client-certs/tls.key
+        # Deliberately no runAsUser/runAsNonRoot here: this container rewrites the etcd
+        # data directory on the PVC, which etcd itself owns. The chart defaults the
+        # StatefulSet's podSecurityContext to {}, so that is root. Forcing a UID would
+        # make the restore depend on fsGroup re-owning the volume, which a CSI driver may
+        # silently not support - and the failure would land after the StatefulSet has
+        # already been scaled to zero. See docs/restore.md.
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
         - mountPath: /opt/certs/root-client-certs
           name: root-client-certs
@@ -123,8 +129,13 @@ spec:
           name: data 
       restartPolicy: OnFailure
       serviceAccountName: ${etcd_name}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: shared-data
+        emptyDir: {}
+      - name: tmp
         emptyDir: {}
       - name: data
         persistentVolumeClaim:
