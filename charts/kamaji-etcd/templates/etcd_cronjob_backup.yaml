@@ -72,8 +72,10 @@ spec:
                 - -c
                 - |
                   set -e
-                  DEST=":s3:${STORAGE_BUCKET_NAME}${STORAGE_BUCKET_FOLDER:+/${STORAGE_BUCKET_FOLDER}}"
-                  rclone copy /snapshots/{{ include "etcd.fullname" . }}_*.db "${DEST}/"
+                  : "${RCLONE_CONFIG_BACKUP_TYPE:?not set - see docs/backup.md for the required secret keys}"
+                  : "${STORAGE_BUCKET_NAME:?not set - see docs/backup.md for the required secret keys}"
+                  DEST="backup:${STORAGE_BUCKET_NAME}${STORAGE_BUCKET_FOLDER:+/${STORAGE_BUCKET_FOLDER}}"
+                  rclone copy /snapshots "${DEST}/" --include "{{ include "etcd.fullname" . }}_*.db"
                   {{- if eq .Values.backup.retention.mode "count" }}
                   rclone lsf --files-only --include "{{ include "etcd.fullname" . }}_*.db" "${DEST}/" \
                     | sort -r | tail -n +{{ add (int .Values.backup.retention.count) 1 }} \
@@ -81,41 +83,14 @@ spec:
                   {{- else if eq .Values.backup.retention.mode "age" }}
                   rclone delete --min-age {{ .Values.backup.retention.maxAge }} --include "{{ include "etcd.fullname" . }}_*.db" "${DEST}/"
                   {{- end }}
+              # The secret carries the rclone remote definition verbatim
+              # (RCLONE_CONFIG_BACKUP_*) plus the destination; the chart maps nothing.
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.backup.storageSecret }}
+              # Kept in env, not envFrom: a duplicate key in env wins, so these stay
+              # under the chart's control and cannot be broken from the secret.
               env:
-                - name: STORAGE_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.backup.storageSecret }}
-                      key: storage-url
-                - name: STORAGE_ACCESS_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.backup.storageSecret }}
-                      key: storage-access-key
-                - name: STORAGE_SECRET_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.backup.storageSecret }}
-                      key: storage-secret-key
-                - name: STORAGE_BUCKET_NAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.backup.storageSecret }}
-                      key: storage-bucket-name
-                - name: STORAGE_BUCKET_FOLDER
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.backup.storageSecret }}
-                      key: storage-bucket-folder
-                      optional: true
-                - name: RCLONE_S3_PROVIDER
-                  value: {{ .Values.backup.s3Provider | quote }}
-                - name: RCLONE_S3_ACCESS_KEY_ID
-                  value: $(STORAGE_ACCESS_KEY)
-                - name: RCLONE_S3_SECRET_ACCESS_KEY
-                  value: $(STORAGE_SECRET_KEY)
-                - name: RCLONE_S3_ENDPOINT
-                  value: $(STORAGE_URL)
                 - name: RCLONE_CONFIG
                   value: /dev/null
                 - name: XDG_CACHE_HOME

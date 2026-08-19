@@ -253,16 +253,14 @@ certManager:
     create: true
     nameOverride: ""
 
-# -- Scheduled etcd snapshot to S3-compatible object storage
+# -- Scheduled etcd snapshot to object storage, uploaded with rclone
 backup:
   # -- Enable the backup CronJob
   enabled: false
   # -- Cron schedule for the backup job
   schedule: "0 0 * * *"
-  # -- Name of a pre-existing secret with S3/MinIO credentials and target (keys: storage-url, storage-access-key, storage-secret-key, storage-bucket-name, storage-bucket-folder)
+  # -- Name of a pre-existing secret, loaded into the upload container with envFrom. Its keys are rclone environment variables defining a remote named `backup`, so any rclone backend and option is reachable without a chart change. Required: RCLONE_CONFIG_BACKUP_TYPE, STORAGE_BUCKET_NAME. Optional: STORAGE_BUCKET_FOLDER and any further RCLONE_CONFIG_BACKUP_* key. See docs/backup.md
   storageSecret: backup-storage-secret
-  # -- rclone S3 provider (Minio, AWS, Ceph, Other, ...)
-  s3Provider: Minio
   # -- rclone image used to upload the snapshot
   image:
     repository: rclone/rclone

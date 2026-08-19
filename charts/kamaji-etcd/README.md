@@ -63,7 +63,7 @@ Here the values you can override:
 | alerts.rules | list | `[]` | The rules for alerts |
 | autoCompactionMode | string | `"periodic"` | Interpret 'auto-compaction-retention' one of: periodic|revision. Use 'periodic' for duration based retention, 'revision' for revision number based retention. |
 | autoCompactionRetention | string | `"5m"` | Auto compaction retention length. 0 means disable auto compaction. |
-| backup | object | `{"enabled":false,"failedJobsHistoryLimit":3,"image":{"pullPolicy":"IfNotPresent","repository":"rclone/rclone","tag":""},"resources":{},"retention":{"count":7,"maxAge":"30d","mode":"none"},"s3Provider":"Minio","schedule":"0 0 * * *","storageSecret":"backup-storage-secret","successfulJobsHistoryLimit":3}` | Scheduled etcd snapshot to S3-compatible object storage |
+| backup | object | `{"enabled":false,"failedJobsHistoryLimit":3,"image":{"pullPolicy":"IfNotPresent","repository":"rclone/rclone","tag":""},"resources":{},"retention":{"count":7,"maxAge":"30d","mode":"none"},"schedule":"0 0 * * *","storageSecret":"backup-storage-secret","successfulJobsHistoryLimit":3}` | Scheduled etcd snapshot to object storage, uploaded with rclone |
 | backup.enabled | bool | `false` | Enable the backup CronJob |
 | backup.failedJobsHistoryLimit | int | `3` | Number of failed finished jobs to retain |
 | backup.image | object | `{"pullPolicy":"IfNotPresent","repository":"rclone/rclone","tag":""}` | rclone image used to upload the snapshot |
@@ -72,9 +72,8 @@ Here the values you can override:
 | backup.retention.count | int | `7` | Keep only the N most recent snapshots (mode=count) |
 | backup.retention.maxAge | string | `"30d"` | Delete snapshots older than this rclone duration, e.g. 720h or 30d (mode=age) |
 | backup.retention.mode | string | `"none"` | Prune strategy for old snapshots: none | count | age (none relies on bucket lifecycle) |
-| backup.s3Provider | string | `"Minio"` | rclone S3 provider (Minio, AWS, Ceph, Other, ...) |
 | backup.schedule | string | `"0 0 * * *"` | Cron schedule for the backup job |
-| backup.storageSecret | string | `"backup-storage-secret"` | Name of a pre-existing secret with S3/MinIO credentials and target (keys: storage-url, storage-access-key, storage-secret-key, storage-bucket-name, storage-bucket-folder) |
+| backup.storageSecret | string | `"backup-storage-secret"` | Name of a pre-existing secret, loaded into the upload container with envFrom. Its keys are rclone environment variables defining a remote named `backup`, so any rclone backend and option is reachable without a chart change. Required: RCLONE_CONFIG_BACKUP_TYPE, STORAGE_BUCKET_NAME. Optional: STORAGE_BUCKET_FOLDER and any further RCLONE_CONFIG_BACKUP_* key. See docs/backup.md |
 | backup.successfulJobsHistoryLimit | int | `3` | Number of successful finished jobs to retain |
 | certManager.ca.create | bool | `true` |  |
 | certManager.ca.nameOverride | string | `""` |  |
