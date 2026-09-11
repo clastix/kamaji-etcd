@@ -13,14 +13,16 @@ set -eu -o pipefail
 ETCD_NAME="kamaji-etcd"
 ETCD_SERVICE="kamaji-etcd-client"
 ETCD_NAMESPACE="kamaji-system"
+STORAGE_SECRET="backup-storage-secret"  # secret holding the rclone remote definition
 
 # Parse script parameters
-while getopts "e:s:n:" opt; do
+while getopts "e:s:n:b:" opt; do
   case ${opt} in
     e ) ETCD_NAME=$OPTARG ;;
     s ) ETCD_SERVICE=$OPTARG ;;
     n ) ETCD_NAMESPACE=$OPTARG ;;
-    \? ) echo "Usage: ./backup.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace]"
+    b ) STORAGE_SECRET=$OPTARG ;;
+    \? ) echo "Usage: ./backup.sh [-e etcd_name] [-s etcd_client_service] [-n etcd_namespace] [-b storage_secret]"
          exit 1 ;;
   esac
 done
@@ -89,7 +91,7 @@ spec:
           rclone copy /opt/dump "\${DEST}/" --include "${etcd_name}_*.db"
         envFrom:
         - secretRef:
-            name: backup-storage-secret
+            name: ${STORAGE_SECRET}
         env:
         - name: RCLONE_CONFIG
           value: /dev/null

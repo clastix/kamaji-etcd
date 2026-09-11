@@ -14,15 +14,17 @@ ETCD_NAME="kamaji-etcd"
 ETCD_SERVICE="kamaji-etcd"
 ETCD_NAMESPACE="kamaji-system"
 SNAPSHOT=""  # snapshot file
+STORAGE_SECRET="backup-storage-secret"  # secret holding the rclone remote definition
 
 # Parse script parameters
-while getopts "e:s:n:f:" opt; do
+while getopts "e:s:n:f:b:" opt; do
   case ${opt} in
     e ) ETCD_NAME=$OPTARG ;;
     s ) ETCD_SERVICE=$OPTARG ;;
     n ) ETCD_NAMESPACE=$OPTARG ;;
     f ) SNAPSHOT=$OPTARG ;;
-    \? ) echo "Usage: ./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot]"
+    b ) STORAGE_SECRET=$OPTARG ;;
+    \? ) echo "Usage: ./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot] [-b storage_secret]"
          exit 1 ;;
   esac
 done
@@ -41,7 +43,17 @@ metadata:
   name: ${etcd_name}-restore-job-${index}
   namespace: $etcd_namespace
 spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 240
   template:
+    metadata:
+      labels:
+        # Mirrors the backup CronJob pods on purpose: those reach the object storage
+        # every day, so this pod inherits the same Cilium identity and needs no new
+        # policy. Not a Service selector label, so etcd Services never route here.
+        app.kubernetes.io/part-of: ${etcd_name}
+        app.kubernetes.io/component: backup
+        app.kubernetes.io/managed-by: Helm
     spec:
       initContainers:
       - name: download
@@ -55,10 +67,10 @@ spec:
           : "\${RCLONE_CONFIG_BACKUP_TYPE:?not set - see docs/restore.md for the required secret keys}"
           : "\${STORAGE_BUCKET_NAME:?not set - see docs/restore.md for the required secret keys}"
           DEST="backup:\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}"
-          rclone copy "\${DEST}/${SNAPSHOT}" /opt/dump/
+          rclone copy "\${DEST}/${SNAPSHOT}" /opt/dump/ --contimeout 20s --timeout 60s --retries 2 --low-level-retries 3
         envFrom:
         - secretRef:
-            name: backup-storage-secret
+            name: ${STORAGE_SECRET}
         env:
         - name: RCLONE_CONFIG
           value: /dev/null
@@ -102,12 +114,9 @@ spec:
             --initial-advertise-peer-urls https://${etcd_name}-${index}.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380
             mv /var/run/etcd/restore-tmp/member /var/run/etcd/member
             rmdir /var/run/etcd/restore-tmp
-        # Deliberately no runAsUser/runAsNonRoot here: this container rewrites the etcd
-        # data directory on the PVC, which etcd itself owns. The chart defaults the
-        # StatefulSet's podSecurityContext to {}, so that is root. Forcing a UID would
-        # make the restore depend on fsGroup re-owning the volume, which a CSI driver may
-        # silently not support - and the failure would land after the StatefulSet has
-        # already been scaled to zero. See docs/restore.md.
+        # Runs as the same UID/GID as the StatefulSet, mirrored at pod level: the restored
+        # data directory must end up owned the way etcd expects, and the Job has to be
+        # admissible under a restricted PodSecurity label.
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -122,6 +131,11 @@ spec:
       restartPolicy: OnFailure
       serviceAccountName: ${etcd_name}
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       volumes:
