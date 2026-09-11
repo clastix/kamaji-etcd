@@ -88,24 +88,20 @@ spec:
         - sh
         - -c
         - |
-            # Remove existing etcd member data and restore from snapshot
+            # Restore into a subdirectory and move member/ into place afterwards:
+            # etcdutl requires an empty --data-dir, and /var/run/etcd is the PVC mount
+            # point, i.e. a filesystem root, which always holds lost+found on ext4.
+            set -e
             etcdutl --write-out=table snapshot status /opt/dump/${SNAPSHOT}
-            rm -rf /var/run/etcd/member
+            rm -rf /var/run/etcd/member /var/run/etcd/restore-tmp
             etcdutl snapshot restore /opt/dump/${SNAPSHOT} \
-            --data-dir /var/run/etcd \
+            --data-dir /var/run/etcd/restore-tmp \
             --name ${etcd_name}-${index} \
             --initial-cluster ${etcd_name}-0=https://${etcd_name}-0.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-1=https://${etcd_name}-1.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-2=https://${etcd_name}-2.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380 \
             --initial-cluster-token kamaji \
             --initial-advertise-peer-urls https://${etcd_name}-${index}.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380
-        env:
-        - name: ENDPOINTS
-          value: https://localhost:2379
-        - name: ETCDCTL_CACERT
-          value: /opt/certs/ca/ca.crt
-        - name: ETCDCTL_CERT
-          value: /opt/certs/root-client-certs/tls.crt
-        - name: ETCDCTL_KEY
-          value: /opt/certs/root-client-certs/tls.key
+            mv /var/run/etcd/restore-tmp/member /var/run/etcd/member
+            rmdir /var/run/etcd/restore-tmp
         # Deliberately no runAsUser/runAsNonRoot here: this container rewrites the etcd
         # data directory on the PVC, which etcd itself owns. The chart defaults the
         # StatefulSet's podSecurityContext to {}, so that is root. Forcing a UID would
@@ -119,10 +115,6 @@ spec:
             drop:
             - ALL
         volumeMounts:
-        - mountPath: /opt/certs/root-client-certs
-          name: root-client-certs
-        - mountPath: /opt/certs/ca
-          name: certs
         - mountPath: /opt/dump
           name: shared-data
         - mountPath: /var/run/etcd
@@ -140,12 +132,6 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: data-${etcd_name}-${index}
-      - name: root-client-certs
-        secret:
-          secretName: ${etcd_name}-root-client-certs
-      - name: certs
-        secret:
-          secretName: ${etcd_name}-certs
 EOF
 }
 
