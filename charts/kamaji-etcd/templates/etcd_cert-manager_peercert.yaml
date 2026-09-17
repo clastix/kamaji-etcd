@@ -22,7 +22,7 @@ spec:
     algorithm: ECDSA
     size: 256
   duration: 2160h # 90 days
-  renewBefore: 168h # 15 days
+  renewBefore: 168h # 7 days
   isCA: false
   usages:
     - signing
