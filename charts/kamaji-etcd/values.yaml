@@ -252,3 +252,52 @@ certManager:
   clientCert:
     create: true
     nameOverride: ""
+
+# -- Scheduled etcd snapshot to object storage, uploaded with rclone
+backup:
+  # -- Enable the backup CronJob
+  enabled: false
+  # -- Cron schedule for the backup job
+  schedule: "0 0 * * *"
+  # -- Name of a pre-existing secret, loaded into the upload container with envFrom. Its keys are rclone environment variables defining a remote named `backup`, so any rclone backend and option is reachable without a chart change. Required: RCLONE_CONFIG_BACKUP_TYPE, STORAGE_BUCKET_NAME. Optional: STORAGE_BUCKET_FOLDER and any further RCLONE_CONFIG_BACKUP_* key. See docs/backup.md
+  storageSecret: backup-storage-secret
+  # -- rclone image used to upload the snapshot
+  image:
+    repository: rclone/rclone
+    # -- Image tag; defaults to a chart-pinned version when empty
+    tag: ""
+    pullPolicy: IfNotPresent
+  retention:
+    # -- Prune strategy for old snapshots: none | count | age (none relies on bucket lifecycle)
+    mode: none
+    # -- Keep only the N most recent snapshots (mode=count)
+    count: 7
+    # -- Delete snapshots older than this rclone duration, e.g. 720h or 30d (mode=age)
+    maxAge: 30d
+  # -- Number of successful finished jobs to retain
+  successfulJobsHistoryLimit: 3
+  # -- Number of failed finished jobs to retain
+  failedJobsHistoryLimit: 3
+  # -- Resources for the backup pod
+  resources: {}
+
+# -- Scheduled etcd defragmentation
+defrag:
+  # -- Enable the defrag CronJob
+  enabled: false
+  # -- Cron schedule for the defrag job
+  schedule: "0 0 * * *"
+  # -- Defrag rule evaluated by etcd-defrag (defrag runs when it evaluates true)
+  rule: "dbSizeInUse / dbSize <= 0.55 || dbQuotaUsage > 0.8"
+  # -- etcd-defrag image
+  image:
+    repository: ghcr.io/ahrtr/etcd-defrag
+    # -- Image tag; defaults to a chart-pinned version when empty
+    tag: ""
+    pullPolicy: IfNotPresent
+  # -- Number of successful finished jobs to retain
+  successfulJobsHistoryLimit: 3
+  # -- Number of failed finished jobs to retain
+  failedJobsHistoryLimit: 3
+  # -- Resources for the defrag pod
+  resources: {}

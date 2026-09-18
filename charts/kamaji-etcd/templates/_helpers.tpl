@@ -215,8 +215,85 @@ Client cluster endpoints.
 {{- end }}
 
 {{/*
-Checking mutually exclusive status for self signed certificates and cert manager.
+Cert volumes for ancillary jobs (backup/defrag). Branches on cert-manager exactly
+like etcd_job_preinstall_2.yaml. ca -> ca.crt, root-certs -> tls.crt/tls.key.
 */}}
-{{- if and .Values.selfSignedCertificates.enabled .Values.certManager.enabled }}
-{{- fail "selfSignedCertificates.enabled and certManager.enabled are mutually exclusive and cannot be both true" }}
+{{- define "etcd.jobCertVolumes" -}}
+{{- if .Values.certManager.enabled }}
+- name: ca
+  secret:
+    secretName: {{ include "etcd.certManager.serverCert" . }}
+    defaultMode: 0440
+- name: root-certs
+  secret:
+    secretName: {{ include "etcd.certManager.clientCert" . }}
+    defaultMode: 0440
+{{- else }}
+- name: ca
+  secret:
+    secretName: {{ include "etcd.caSecretName" . }}
+    defaultMode: 0440
+- name: root-certs
+  secret:
+    secretName: {{ include "etcd.clientSecretName" . }}
+    defaultMode: 0440
 {{- end }}
+{{- end -}}
+
+{{/*
+Cert volume mounts for ancillary jobs (backup/defrag).
+*/}}
+{{- define "etcd.jobCertVolumeMounts" -}}
+- name: ca
+  mountPath: /opt/certs/ca
+  readOnly: true
+- name: root-certs
+  mountPath: /opt/certs/root-certs
+  readOnly: true
+{{- end -}}
+
+{{/*
+Hardened pod-level security context for ancillary jobs (non-root, restricted-PSA).
+*/}}
+{{- define "etcd.jobPodSecurityContext" -}}
+runAsNonRoot: true
+runAsUser: 1000
+runAsGroup: 1000
+fsGroup: 1000
+seccompProfile:
+  type: RuntimeDefault
+{{- end -}}
+
+{{/*
+Hardened container-level security context for ancillary jobs.
+*/}}
+{{- define "etcd.jobContainerSecurityContext" -}}
+allowPrivilegeEscalation: false
+readOnlyRootFilesystem: true
+capabilities:
+  drop:
+    - ALL
+{{- end -}}
+
+{{/*
+Comma-separated https client endpoints for all etcd members (for etcd-defrag).
+*/}}
+{{- define "etcd.endpointsCSV" -}}
+{{- $outer := . -}}
+{{- $list := list -}}
+{{- range $i := until (int $.Values.replicas) -}}
+{{- $list = append $list (printf "https://%s-%d.%s.%s.svc.%s:%d" (include "etcd.stsName" $outer) $i (include "etcd.serviceName" $outer) $.Release.Namespace $.Values.clusterDomain (int $.Values.clientPort)) -}}
+{{- end -}}
+{{- join "," $list -}}
+{{- end -}}
+
+{{/*
+Fully-qualified pinned images for ancillary jobs.
+*/}}
+{{- define "etcd.backup.image" -}}
+{{- printf "%s:%s" .Values.backup.image.repository (.Values.backup.image.tag | default "1.74.4") -}}
+{{- end -}}
+
+{{- define "etcd.defrag.image" -}}
+{{- printf "%s:%s" .Values.defrag.image.repository (.Values.defrag.image.tag | default "v0.41.0") -}}
+{{- end -}}

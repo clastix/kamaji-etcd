@@ -1,0 +1,60 @@
+{{- if .Values.defrag.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "etcd.fullname" . }}-defrag
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.defrag.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.defrag.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.defrag.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: {{ .Release.Service }}
+            app.kubernetes.io/part-of: {{ include "etcd.name" . }}
+            app.kubernetes.io/component: defrag
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            {{- include "etcd.jobPodSecurityContext" . | nindent 12 }}
+          {{- with .Values.jobs.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobs.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jobs.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: defrag
+              image: "{{ include "etcd.defrag.image" . }}"
+              imagePullPolicy: {{ .Values.defrag.image.pullPolicy }}
+              args:
+                - --endpoints={{ include "etcd.endpointsCSV" . }}
+                - --cacert=/opt/certs/ca/ca.crt
+                - --cert=/opt/certs/root-certs/tls.crt
+                - --key=/opt/certs/root-certs/tls.key
+                - --cluster
+                - {{ printf "--defrag-rule=%s" .Values.defrag.rule | quote }}
+              securityContext:
+                {{- include "etcd.jobContainerSecurityContext" . | nindent 16 }}
+              {{- with .Values.defrag.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              volumeMounts:
+                {{- include "etcd.jobCertVolumeMounts" . | nindent 16 }}
+          volumes:
+            {{- include "etcd.jobCertVolumes" . | nindent 12 }}
+{{- end }}

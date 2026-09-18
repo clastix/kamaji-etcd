@@ -14,15 +14,17 @@ ETCD_NAME="kamaji-etcd"
 ETCD_SERVICE="kamaji-etcd"
 ETCD_NAMESPACE="kamaji-system"
 SNAPSHOT=""  # snapshot file
+STORAGE_SECRET="backup-storage-secret"  # secret holding the rclone remote definition
 
 # Parse script parameters
-while getopts "e:s:n:f:" opt; do
+while getopts "e:s:n:f:b:" opt; do
   case ${opt} in
     e ) ETCD_NAME=$OPTARG ;;
     s ) ETCD_SERVICE=$OPTARG ;;
     n ) ETCD_NAMESPACE=$OPTARG ;;
     f ) SNAPSHOT=$OPTARG ;;
-    \? ) echo "Usage: ./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot]"
+    b ) STORAGE_SECRET=$OPTARG ;;
+    \? ) echo "Usage: ./restore.sh [-e etcd_name] [-s etcd_service] [-n etcd_namespace] [-f snapshot] [-b storage_secret]"
          exit 1 ;;
   esac
 done
@@ -41,52 +43,56 @@ metadata:
   name: ${etcd_name}-restore-job-${index}
   namespace: $etcd_namespace
 spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 240
   template:
+    metadata:
+      labels:
+        # Mirrors the backup CronJob pods on purpose: those reach the object storage
+        # every day, so this pod inherits the same Cilium identity and needs no new
+        # policy. Not a Service selector label, so etcd Services never route here.
+        app.kubernetes.io/part-of: ${etcd_name}
+        app.kubernetes.io/component: backup
+        app.kubernetes.io/managed-by: Helm
     spec:
       initContainers:
-      - name: minio-client
-        image: minio/mc:RELEASE.2022-11-07T23-47-39Z
+      - name: download
+        image: rclone/rclone:1.74.4
         command:
         - sh
         - -c
         - |
-          # Set up MinIO client and download the snapshot
-          if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-             \$MC cp "storage/\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/${SNAPSHOT}" /opt/dump;
-          else
-             exit 1;
-          fi
+          # Download the snapshot from the remote defined by the secret
+          set -e
+          : "\${RCLONE_CONFIG_BACKUP_TYPE:?not set - see docs/restore.md for the required secret keys}"
+          : "\${STORAGE_BUCKET_NAME:?not set - see docs/restore.md for the required secret keys}"
+          DEST="backup:\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}"
+          rclone copy "\${DEST}/${SNAPSHOT}" /opt/dump/ --contimeout 20s --timeout 60s --retries 2 --low-level-retries 3
+        envFrom:
+        - secretRef:
+            name: ${STORAGE_SECRET}
         env:
-        - name: STORAGE_URL
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-url
-        - name: STORAGE_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-access-key
-        - name: STORAGE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-secret-key
-        - name: STORAGE_BUCKET_NAME
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-bucket-name
-        - name: STORAGE_BUCKET_FOLDER
-          valueFrom:
-            secretKeyRef:
-              name: backup-storage-secret
-              key: storage-bucket-folder
-        - name: MC
-          value: "/usr/bin/mc --config-dir /tmp"
+        - name: RCLONE_CONFIG
+          value: /dev/null
+        - name: XDG_CACHE_HOME
+          value: /tmp
+        - name: TMPDIR
+          value: /tmp
+        # Writes only to emptyDir volumes, so it can be fully hardened.
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
         - mountPath: /opt/dump
           name: shared-data
+        - mountPath: /tmp
+          name: tmp
       containers:
       - name: etcd-client
         image: quay.io/coreos/etcd:v3.5.6
@@ -94,47 +100,52 @@ spec:
         - sh
         - -c
         - |
-            # Remove existing etcd member data and restore from snapshot
+            # Restore into a subdirectory and move member/ into place afterwards:
+            # etcdutl requires an empty --data-dir, and /var/run/etcd is the PVC mount
+            # point, i.e. a filesystem root, which always holds lost+found on ext4.
+            set -e
             etcdutl --write-out=table snapshot status /opt/dump/${SNAPSHOT}
-            rm -rf /var/run/etcd/member
+            rm -rf /var/run/etcd/member /var/run/etcd/restore-tmp
             etcdutl snapshot restore /opt/dump/${SNAPSHOT} \
-            --data-dir /var/run/etcd \
+            --data-dir /var/run/etcd/restore-tmp \
             --name ${etcd_name}-${index} \
             --initial-cluster ${etcd_name}-0=https://${etcd_name}-0.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-1=https://${etcd_name}-1.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380,${etcd_name}-2=https://${etcd_name}-2.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380 \
             --initial-cluster-token kamaji \
             --initial-advertise-peer-urls https://${etcd_name}-${index}.${etcd_service}.${etcd_namespace}.svc.cluster.local:2380
-        env:
-        - name: ENDPOINTS
-          value: https://localhost:2379
-        - name: ETCDCTL_CACERT
-          value: /opt/certs/ca/ca.crt
-        - name: ETCDCTL_CERT
-          value: /opt/certs/root-client-certs/tls.crt
-        - name: ETCDCTL_KEY
-          value: /opt/certs/root-client-certs/tls.key
+            mv /var/run/etcd/restore-tmp/member /var/run/etcd/member
+            rmdir /var/run/etcd/restore-tmp
+        # Runs as the same UID/GID as the StatefulSet, mirrored at pod level: the restored
+        # data directory must end up owned the way etcd expects, and the Job has to be
+        # admissible under a restricted PodSecurity label.
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
-        - mountPath: /opt/certs/root-client-certs
-          name: root-client-certs
-        - mountPath: /opt/certs/ca
-          name: certs
         - mountPath: /opt/dump
           name: shared-data
         - mountPath: /var/run/etcd
           name: data 
       restartPolicy: OnFailure
       serviceAccountName: ${etcd_name}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: shared-data
+        emptyDir: {}
+      - name: tmp
         emptyDir: {}
       - name: data
         persistentVolumeClaim:
           claimName: data-${etcd_name}-${index}
-      - name: root-client-certs
-        secret:
-          secretName: ${etcd_name}-root-client-certs
-      - name: certs
-        secret:
-          secretName: ${etcd_name}-certs
 EOF
 }
 

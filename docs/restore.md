@@ -15,20 +15,25 @@ The script performs the following steps:
 ## Requirements
 
 - Ensure you have `kubectl` installed and configured to interact with the management cluster.
-- The snapshot should be taken previously with the `backup.sh` script. It is assumed that the snapshot file is stored on an S3-like storage.
+- The snapshot should be taken previously with the `backup.sh` script or the chart's backup CronJob. It is assumed that the snapshot file is stored on object storage reachable by `rclone`.
 - A kubernetes secret called `backup-storage-secret` containing the parameters and credentials to access the storage must be created in the same namespace where `kamaji-etcd` is running.
 
 ### Creating the Secret
 
-To create the secret, use the following command:
+The restore job reads the same secret the backup writes with. Its keys are rclone
+environment variables defining a remote named `backup`; see
+[Take a backup](backup.md#creating-the-secret) for the full contract, the per-provider
+examples and how to verify the secret without a cluster.
 
 ```bash
 kubectl create secret generic backup-storage-secret \
-  --from-literal=storage-url=<storage_url> \
-  --from-literal=storage-access-key=<access_key> \
-  --from-literal=storage-secret-key=<access_secret> \
-  --from-literal=storage-bucket-name=<bucket_name> \
-  --from-literal=storage-bucket-folder=<bucket_folder> \
+  --from-literal=RCLONE_CONFIG_BACKUP_TYPE=s3 \
+  --from-literal=RCLONE_CONFIG_BACKUP_PROVIDER=<provider> \
+  --from-literal=RCLONE_CONFIG_BACKUP_ENDPOINT=<storage_url> \
+  --from-literal=RCLONE_CONFIG_BACKUP_ACCESS_KEY_ID=<access_key> \
+  --from-literal=RCLONE_CONFIG_BACKUP_SECRET_ACCESS_KEY=<access_secret> \
+  --from-literal=STORAGE_BUCKET_NAME=<bucket_name> \
+  --from-literal=STORAGE_BUCKET_FOLDER=<bucket_folder> \
   -n <etcd_namespace>
 ```
 
@@ -52,6 +57,8 @@ To run the script, use the following command:
 - Ensure that the snapshot file is accessible and the necessary secret `backup-storage-secret` for accessing the storage is configured in the same namespace.
 - The script uses `kubectl` commands, so ensure you have the necessary permissions to perform these operations.
 - The Kubernetes project recommends you should stop all the control plane components before restoring the etcd datastore. [Here](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#restoring-an-etcd-cluster).
+- **Verify the snapshot is reachable before you start.** The script scales the StatefulSet to zero *before* the restore jobs download the snapshot, so a wrong endpoint, a missing object or a bad credential leaves `etcd` stopped with nothing restored. The `docker run ... rclone ls backup:<bucket>` command in [Take a backup](backup.md#verifying-the-secret) confirms both the credentials and the presence of the file.
+- The restore Job's `rclone` container runs non-root with a read-only root filesystem and all capabilities dropped. Its `etcd-client` container drops capabilities too but keeps the default UID on purpose: it rewrites the etcd data directory on the PVC, which `etcd` itself owns, and the chart defaults the StatefulSet's `podSecurityContext` to `{}` — that is root. Forcing a UID there would make the restore depend on `fsGroup` re-owning the volume, which not every CSI driver supports. As a consequence the restore Job is **not** admissible under a `restricted` PodSecurity label; making it so requires running `etcd` itself as non-root via the chart's `podSecurityContext`.
 
 ### Example:
 
