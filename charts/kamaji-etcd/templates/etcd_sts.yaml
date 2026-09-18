@@ -37,11 +37,20 @@ spec:
         - name: certs
           projected:
             sources:
+              {{- if .Values.certManager.caBundle.enabled }}
               - secret:
-                  name: {{ include "etcd.certManager.serverCert" .  }}
+                  name: {{ include "etcd.caBundle.name" . }}
                   items:
                     - key: ca.crt
                       path: ca.crt
+              {{- end }}
+              - secret:
+                  name: {{ include "etcd.certManager.serverCert" .  }}
+                  items:
+                    {{- if not .Values.certManager.caBundle.enabled }}
+                    - key: ca.crt
+                      path: ca.crt
+                    {{- end }}
                     - key: tls.crt
                       path: server.pem
                     - key: tls.key

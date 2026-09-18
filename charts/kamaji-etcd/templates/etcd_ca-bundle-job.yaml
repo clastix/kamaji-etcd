@@ -1,0 +1,155 @@
+{{- if .Values.certManager.caBundle.enabled }}
+{{- if not .Values.certManager.enabled }}
+{{- fail "certManager.caBundle.enabled requires certManager.enabled to be true" }}
+{{- end }}
+{{- $releaseNs := .Release.Namespace }}
+{{- $ownCA := dict "namespace" $releaseNs "name" (include "etcd.certManager.ca" .) "key" (.Values.certManager.caBundle.ownCAKey | default "tls.crt") }}
+{{- $sources := prepend .Values.certManager.caBundle.additionalCASecrets $ownCA }}
+{{- $byNamespace := dict }}
+{{- range $sources }}
+{{- $ns := .namespace | default $releaseNs }}
+{{- if not (hasKey $byNamespace $ns) }}
+{{- $_ := set $byNamespace $ns list }}
+{{- end }}
+{{- $_ := set $byNamespace $ns (append (index $byNamespace $ns) .name | uniq) }}
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      {{- range index $byNamespace $releaseNs }}
+      - {{ . | quote }}
+      {{- end }}
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "update", "patch"]
+    resourceNames:
+      - {{ include "etcd.caBundle.name" . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "etcd.caBundle.name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "etcd.caBundle.name" . }}
+    namespace: {{ $releaseNs }}
+{{- range $ns, $names := $byNamespace }}
+{{- if ne $ns $releaseNs }}
+---
+# Lets the merge Job read CA source Secrets living outside this release's own namespace (e.g.
+# an external root CA), without depending on anything like trust-manager's single fixed
+# --trust-namespace - RBAC here can span as many namespaces as certManager.caBundle.additionalCASecrets needs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "etcd.caBundle.name" $ }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "etcd.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      {{- range $names }}
+      - {{ . | quote }}
+      {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "etcd.caBundle.name" $ }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "etcd.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "etcd.caBundle.name" $ }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "etcd.caBundle.name" $ }}
+    namespace: {{ $releaseNs }}
+{{- end }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "1"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        {{- include "etcd.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "etcd.caBundle.name" . }}
+      containers:
+        - name: ca-bundle
+          image: {{ printf "%s:%s" .Values.certManager.caBundle.image.repository .Values.certManager.caBundle.image.tag }}
+          imagePullPolicy: {{ .Values.certManager.caBundle.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              fetch() {
+                ns="$1"; name="$2"; key="$3"
+                key_escaped=$(printf '%s' "$key" | sed 's/\./\\./g')
+                i=0
+                while [ "$i" -lt 30 ]; do
+                  if data=$(kubectl -n "$ns" get secret "$name" -o jsonpath="{.data['$key_escaped']}" 2>/dev/null) && [ -n "$data" ]; then
+                    echo "$data" | base64 -d
+                    echo
+                    return 0
+                  fi
+                  echo "waiting for secret $ns/$name key $key to be populated ($i/30)..." >&2
+                  i=$((i+1))
+                  sleep 2
+                done
+                echo "timed out waiting for secret $ns/$name key $key" >&2
+                return 1
+              }
+              : > /tmp/ca-bundle.pem
+              {{- range $sources }}
+              fetch {{ .namespace | default $releaseNs | quote }} {{ .name | quote }} {{ .key | default "tls.crt" | quote }} >> /tmp/ca-bundle.pem
+              {{- end }}
+              kubectl -n {{ $releaseNs | quote }} create secret generic {{ include "etcd.caBundle.name" . | quote }} --from-file=ca.crt=/tmp/ca-bundle.pem --dry-run=client -o yaml | kubectl apply -f -
+{{- end }}

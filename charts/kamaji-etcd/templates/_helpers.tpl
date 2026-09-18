@@ -139,6 +139,13 @@ Name of the etcd client secret.
 {{- end }}
 
 {{/*
+Name of the Secret holding the merged CA bundle, and of the Job/ServiceAccount/Role(Binding)s that produce it.
+*/}}
+{{- define "etcd.caBundle.name" }}
+{{- printf "%s-%s" (include "etcd.fullname" .) "ca-bundle" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Name of the certificate signing requests for the certificates required by etcd.
 */}}
 {{- define "etcd.csrConfigMapName" }}
