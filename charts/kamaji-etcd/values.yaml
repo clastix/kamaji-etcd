@@ -223,6 +223,14 @@ jobs:
     image: quay.io/coreos/etcd
     tag: v3.5.6 # latest container image with shell available!
     pullPolicy: IfNotPresent
+  # -- The securityContext to apply to ancillary job containers (init and main)
+  securityContext:
+    allowPrivilegeEscalation: false
+  # -- The securityContext to apply to ancillary job pods
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
 
 selfSignedCertificates:
   # -- Enables the generation of self-signed certificates for etcd using the cfssl, and kubectl jobs.
