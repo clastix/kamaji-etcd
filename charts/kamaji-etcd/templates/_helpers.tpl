@@ -139,10 +139,18 @@ Name of the etcd client secret.
 {{- end }}
 
 {{/*
-Name of the Secret holding the merged CA bundle, and of the Job/ServiceAccount/Role(Binding)s that produce it.
+Name of the ServiceAccount/Role(Binding)s used by the etcd Pods to build the merged CA bundle.
 */}}
 {{- define "etcd.caBundle.name" }}
 {{- printf "%s-%s" (include "etcd.fullname" .) "ca-bundle" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+CA sources merged into etcd's trusted-ca-file: this chart's own CA first, then certManager.caBundle.additionalCASecrets.
+*/}}
+{{- define "etcd.caBundle.sources" }}
+{{- $ownCA := dict "namespace" .Release.Namespace "name" (include "etcd.certManager.ca" .) "key" (.Values.certManager.caBundle.ownCAKey | default "tls.crt") }}
+{{- prepend .Values.certManager.caBundle.additionalCASecrets $ownCA | toYaml }}
 {{- end }}
 
 {{/*
@@ -226,4 +234,15 @@ Checking mutually exclusive status for self signed certificates and cert manager
 */}}
 {{- if and .Values.selfSignedCertificates.enabled .Values.certManager.enabled }}
 {{- fail "selfSignedCertificates.enabled and certManager.enabled are mutually exclusive and cannot be both true" }}
+{{- end }}
+
+{{/*
+Path of etcd's trusted CA file: the merged bundle built by the ca-bundle init container, when enabled.
+*/}}
+{{- define "etcd.trustedCAFile" }}
+{{- if and .Values.certManager.enabled .Values.certManager.caBundle.enabled }}
+{{- print "/etc/etcd/ca-bundle/ca.crt" }}
+{{- else }}
+{{- print "/etc/etcd/pki/ca.crt" }}
+{{- end }}
 {{- end }}
