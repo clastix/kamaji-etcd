@@ -253,25 +253,23 @@ certManager:
     create: true
     nameOverride: ""
   caBundle:
-    # -- Build etcd's trusted-ca-file as a merged bundle of CA sources via a Helm hook Job (runs
-    # on every install/upgrade), instead of relying on trust-manager. Required when
-    # certManager.issuerRef points to an Issuer backed by a CA that is itself signed by another,
-    # external CA (a chained/intermediate setup): in that case cert-manager only ever propagates
-    # a single certificate into a Certificate's secret ca.crt field, so etcd would trust either
-    # the intermediate or the root, never both.
+    # -- Build etcd's trusted-ca-file as a merged bundle of CA sources via an init container in
+    # the etcd Pods, instead of relying on trust-manager. Required when certManager.issuerRef
+    # points to an Issuer backed by a CA that is itself signed by another, external CA (a
+    # chained/intermediate setup): in that case cert-manager only ever propagates a single
+    # certificate into a Certificate's secret ca.crt field, so etcd would trust either the
+    # intermediate or the root, never both.
     #
-    # The Job reads each source Secret directly (across namespaces, via its own RBAC - no fixed
-    # "trust namespace" restriction to work around) and writes the concatenated PEM into a
-    # plain Secret in this release's namespace, which etcd mounts like any other cert. It only
-    # re-syncs when the Job re-runs (i.e. on `helm upgrade`), not continuously - if a source CA
-    # rotates between upgrades, re-run `helm upgrade` (even a no-op one) to refresh it.
+    # The init container reads each source Secret directly (across namespaces, via the etcd
+    # Pods' own ServiceAccount RBAC - no fixed "trust namespace" restriction to work around) and
+    # writes the concatenated PEM into an emptyDir which etcd uses as its trusted-ca-file. It only
+    # re-syncs when a Pod (re)starts, not continuously - if a source CA rotates, perform a
+    # rollout restart of the etcd StatefulSet to refresh it.
     #
-    # This runs as a post-install,post-upgrade hook, so the etcd StatefulSet is applied first
-    # and its Pods will briefly sit in ContainerCreating until the Job creates the bundle Secret
-    # they mount - the same eventually-consistent pattern the chart already relies on while
-    # cert-manager issues its own certificates.
+    # Unlike a Helm hook, this is compatible with `helm install --wait`: the init container waits
+    # for cert-manager to populate the source Secrets, restarting until they are available.
     enabled: false
-    # -- Container image for the merge Job. Only needs a POSIX shell and kubectl.
+    # -- Container image for the ca-bundle init container. Only needs a POSIX shell and kubectl.
     image:
       repository: clastix/kubectl
       tag: "v1.35"

@@ -1,0 +1,92 @@
+{{- if .Values.certManager.caBundle.enabled }}
+{{- if not .Values.certManager.enabled }}
+{{- fail "certManager.caBundle.enabled requires certManager.enabled to be true" }}
+{{- end }}
+{{- $releaseNs := .Release.Namespace }}
+{{- $byNamespace := dict }}
+{{- range (include "etcd.caBundle.sources" . | fromYamlArray) }}
+{{- $ns := .namespace | default $releaseNs }}
+{{- if not (hasKey $byNamespace $ns) }}
+{{- $_ := set $byNamespace $ns list }}
+{{- end }}
+{{- $_ := set $byNamespace $ns (append (index $byNamespace $ns) .name | uniq) }}
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      {{- range index $byNamespace $releaseNs }}
+      - {{ . | quote }}
+      {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "etcd.caBundle.name" . }}
+  namespace: {{ $releaseNs }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "etcd.caBundle.name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "etcd.caBundle.name" . }}
+    namespace: {{ $releaseNs }}
+{{- range $ns, $names := $byNamespace }}
+{{- if ne $ns $releaseNs }}
+---
+# Lets the etcd Pods' ca-bundle init container read CA source Secrets living outside this release's own namespace (e.g.
+# an external root CA), without depending on anything like trust-manager's single fixed
+# --trust-namespace - RBAC here can span as many namespaces as certManager.caBundle.additionalCASecrets needs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "etcd.caBundle.name" $ }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "etcd.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      {{- range $names }}
+      - {{ . | quote }}
+      {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "etcd.caBundle.name" $ }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "etcd.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "etcd.caBundle.name" $ }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "etcd.caBundle.name" $ }}
+    namespace: {{ $releaseNs }}
+{{- end }}
+{{- end }}
+{{- end }}
