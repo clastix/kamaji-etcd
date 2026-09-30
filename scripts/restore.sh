@@ -44,15 +44,16 @@ spec:
   template:
     spec:
       initContainers:
-      - name: minio-client
-        image: minio/mc:RELEASE.2022-11-07T23-47-39Z
+      - name: rustfs-client
+        image: rustfs/rc:v0.1.36
         command:
         - sh
         - -c
         - |
-          # Set up MinIO client and download the snapshot
-          if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-             \$MC cp "storage/\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/${SNAPSHOT}" /opt/dump;
+          # Set up the RustFS client and download the snapshot
+          # --region can be removed if the storage does not enforce it
+          if \$RC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} --region \${STORAGE_REGION:-us-east-1}; then
+             \$RC object copy "storage/\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/${SNAPSHOT}" /opt/dump;
           else
              exit 1;
           fi
@@ -82,8 +83,16 @@ spec:
             secretKeyRef:
               name: backup-storage-secret
               key: storage-bucket-folder
-        - name: MC
-          value: "/usr/bin/mc --config-dir /tmp"
+        - name: STORAGE_REGION
+          valueFrom:
+            secretKeyRef:
+              name: backup-storage-secret
+              key: storage-region
+              optional: true
+        - name: RC
+          value: "/usr/bin/rc"
+        - name: RC_CONFIG_DIR
+          value: "/tmp"
         volumeMounts:
         - mountPath: /opt/dump
           name: shared-data
@@ -120,7 +129,7 @@ spec:
         - mountPath: /opt/dump
           name: shared-data
         - mountPath: /var/run/etcd
-          name: data 
+          name: data
       restartPolicy: OnFailure
       serviceAccountName: ${etcd_name}
       volumes:

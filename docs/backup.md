@@ -10,6 +10,8 @@ The script performs the following steps:
 
 ## Prerequisites
 
+> ℹ️ The jobs use the RustFS S3 client (`rustfs/rc`) to talk to the storage. Any S3-compatible storage works.
+
 - Ensure you have `kubectl` installed and configured to interact with the management cluster.
 - It is assumed that the snapshot files will be stored on an S3-like storage.
 - A kubernetes secret called `backup-storage-secret` containing the parameters and credentials to access the storage must be created in the same namespace where `kamaji-etcd` is running.
@@ -25,8 +27,11 @@ kubectl create secret generic backup-storage-secret \
   --from-literal=storage-secret-key=<access_secret> \
   --from-literal=storage-bucket-name=<bucket_name> \
   --from-literal=storage-bucket-folder=<bucket_folder> \
+  --from-literal=storage-region=<bucket_region> \
   -n <etcd_namespace>
 ```
+
+The `storage-region` key is optional (default: `us-east-1`). Set it when the storage enforces the bucket region, e.g. AWS S3 buckets outside `us-east-1`.
 
 ## Usage
 To run the script, use the following command:
