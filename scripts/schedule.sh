@@ -59,6 +59,8 @@ spec:
                 etcdctl --endpoints \${ENDPOINTS} snapshot save /opt/dump/\${SNAPSHOT}
                 etcdutl --write-out=table snapshot status /opt/dump/\${SNAPSHOT}
                 md5sum /opt/dump/\${SNAPSHOT}
+                # etcdctl saves the snapshot as 0600: let the non-root rc container read it
+                chmod 0644 /opt/dump/\${SNAPSHOT}
             env:
             - name: ETCDCTL_CACERT
               value: /opt/certs/ca/ca.crt
@@ -74,15 +76,16 @@ spec:
             - mountPath: /opt/dump
               name: shared-data
           containers:
-          - name: minio-client
-            image: minio/mc:RELEASE.2022-11-07T23-47-39Z
+          - name: rustfs-client
+            image: rustfs/rc:v0.1.36
             command:
             - sh
             - -c
             - |
-              # Set up MinIO client and upload the snapshot
-              if \$MC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} && \$MC ping storage -c 3 -e 3; then
-                 \$MC cp /opt/dump/${etcd_name}_*.db storage/\${STORAGE_BUCKET_NAME}/\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/;
+              # Set up the RustFS client and upload the snapshot
+              # --region can be removed if the storage does not enforce it
+              if \$RC alias set storage \${STORAGE_URL} \${STORAGE_ACCESS_KEY} \${STORAGE_SECRET_KEY} --region \${STORAGE_REGION:-us-east-1}; then
+                 \$RC object copy /opt/dump/${etcd_name}_*.db storage/\${STORAGE_BUCKET_NAME}\${STORAGE_BUCKET_FOLDER:+/\${STORAGE_BUCKET_FOLDER}}/;
               else
                  exit 1;
               fi
@@ -112,8 +115,16 @@ spec:
                 secretKeyRef:
                   name: backup-storage-secret
                   key: storage-bucket-folder
-            - name: MC
-              value: "/usr/bin/mc --config-dir /tmp"
+            - name: STORAGE_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: backup-storage-secret
+                  key: storage-region
+                  optional: true
+            - name: RC
+              value: "/usr/bin/rc"
+            - name: RC_CONFIG_DIR
+              value: "/tmp"
             volumeMounts:
             - mountPath: /opt/dump
               name: shared-data
