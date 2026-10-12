@@ -24,6 +24,8 @@ spec:
       initContainers:
         - name: kubectl
           image: "{{ printf "%s:%s" .Values.jobs.kubectl.image (default (include "etcd.jobsTagKubeVersion" . | trim) .Values.jobs.kubectl.tag) }}"
+          securityContext:
+            {{- toYaml .Values.jobs.securityContext | nindent 12 }}
           command:
           - sh
           - -c
@@ -54,15 +56,15 @@ spec:
           image: "{{ printf "%s:%s" .Values.jobs.etcd.image (default "latest" .Values.jobs.etcd.tag) }}"
           imagePullPolicy: {{ .Values.jobs.etcd.pullPolicy }}
           name: etcd-client
+          securityContext:
+            {{- toYaml .Values.jobs.securityContext | nindent 12 }}
           volumeMounts:
             - name: root-certs
               mountPath: /opt/certs/root-certs
             - name: ca
               mountPath: /opt/certs/ca
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+      {{- toYaml .Values.jobs.podSecurityContext | nindent 8 }}
       nodeSelector: {{- toYaml .Values.jobs.nodeSelector | nindent 8 }}
       {{- with .Values.jobs.tolerations }}
       tolerations: {{- toYaml . | nindent 8 }}
