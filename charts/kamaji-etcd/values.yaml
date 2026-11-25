@@ -128,6 +128,14 @@ topologySpreadConstraints: []
 #    matchLabels:
 #      application: kamaji-etcd
 
+podDisruptionBudget:
+  # -- Create a PodDisruptionBudget for the etcd pods, so that voluntary disruptions (e.g. node drains) cannot evict more members than the cluster can lose while keeping quorum
+  enabled: false
+  # -- Maximum number of etcd pods that can be unavailable during a voluntary disruption. Ignored when minAvailable is set
+  maxUnavailable: 1
+  # -- Minimum number of etcd pods that must stay available during a voluntary disruption. Takes precedence over maxUnavailable when set
+  minAvailable: ""
+
 datastore:
   # -- Create a datastore custom resource for Kamaji
   enabled: true
