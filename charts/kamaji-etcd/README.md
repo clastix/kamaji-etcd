@@ -112,6 +112,9 @@ Here the values you can override:
 | persistentVolumeClaim.size | string | `"8Gi"` | The size of persistent storage for etcd data  |
 | persistentVolumeClaim.storageClassName | string | `""` | A specific storage class |
 | podAnnotations | object | `{}` | Annotations to add to all etcd pods |
+| podDisruptionBudget.enabled | bool | `false` | Create a PodDisruptionBudget for the etcd pods, so that voluntary disruptions (e.g. node drains) cannot evict more members than the cluster can lose while keeping quorum |
+| podDisruptionBudget.maxUnavailable | int | `1` | Maximum number of etcd pods that can be unavailable during a voluntary disruption. Ignored when minAvailable is set |
+| podDisruptionBudget.minAvailable | string | `""` | Minimum number of etcd pods that must stay available during a voluntary disruption. Takes precedence over maxUnavailable when set |
 | podLabels | object | `{"application":"kamaji-etcd"}` | Labels to add to all etcd pods |
 | podSecurityContext | object | `{}` | The securityContext to apply to etcd pods |
 | priorityClassName | string | `"system-cluster-critical"` | The priorityClassName to apply to etcd |
